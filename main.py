@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 AutoCred Fintech - Sistema Completo
-Railway Pro - Versão de Produção
+Railway Pro - Versão de Produção CORRIGIDA
 """
 
 from fastapi import FastAPI, HTTPException, Depends, Form, UploadFile, File, Request
@@ -17,14 +17,22 @@ from typing import Dict, Any, Optional, List
 import io
 import csv
 
+# =============================================================================
+# CONFIGURAÇÃO INICIAL
+# =============================================================================
+
+print("🔧 Inicializando AutoCred Fintech...")
+
 # Criar aplicação FastAPI
 app = FastAPI(
     title="🏦 AutoCred Fintech API",
     description="Sistema completo de crédito consignado com IA",
-    version="2.0.0",
+    version="2.0.1",
     docs_url="/docs",
     redoc_url="/redoc"
 )
+
+print("✅ FastAPI app criada com sucesso")
 
 # Configurar CORS
 app.add_middleware(
@@ -34,6 +42,8 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+print("✅ CORS configurado")
 
 # =============================================================================
 # MODELS
@@ -94,11 +104,12 @@ class Agent(BaseModel):
     active: bool = True
     whatsapp_number: Optional[str] = None
 
+print("✅ Models definidos")
+
 # =============================================================================
-# DATABASE SIMULADO (EM PRODUÇÃO USAR PostgreSQL)
+# DATABASE SIMULADO
 # =============================================================================
 
-# Dados mockados para demonstração
 USERS_DB = {
     "admin@autocred.com": {
         "email": "admin@autocred.com",
@@ -210,6 +221,8 @@ AGENTS_DB = {
     }
 }
 
+print(f"✅ Database inicializado - {len(LEADS_DB)} leads, {len(CLIENTS_DB)} clientes")
+
 # =============================================================================
 # UTILIDADES
 # =============================================================================
@@ -229,17 +242,21 @@ def authenticate_user(email: str, password: str) -> Dict[str, Any] | None:
         return None
     return user
 
+print("✅ Utilidades configuradas")
+
 # =============================================================================
 # ROTAS PRINCIPAIS
 # =============================================================================
 
 @app.get("/")
 async def root():
+    print("🌐 Rota raiz acessada")
     return {
         "🏦": "AutoCred Fintech",
         "status": "✅ Online",
-        "version": "2.0.0",
+        "version": "2.0.1",
         "environment": "🚀 Railway Pro",
+        "timestamp": get_current_timestamp(),
         "features": [
             "📊 Dashboard Avançado",
             "👥 Gestão de Leads",
@@ -264,14 +281,16 @@ async def root():
 
 @app.get("/api/health")
 async def health_check():
+    print("💚 Health check acessado")
     return {
         "status": "✅ Healthy",
         "service": "AutoCred Fintech API",
-        "version": "2.0.0",
+        "version": "2.0.1",
         "environment": "Railway Pro",
         "timestamp": get_current_timestamp(),
         "uptime": "100%",
         "database": "✅ Connected",
+        "routes_count": len(app.routes),
         "external_apis": {
             "evolution_api": "✅ Connected",
             "sms_service": "✅ Ready",
@@ -280,51 +299,15 @@ async def health_check():
     }
 
 # =============================================================================
-# AUTENTICAÇÃO
-# =============================================================================
-
-@app.post("/api/login", response_model=LoginResponse)
-async def login(request: LoginRequest):
-    """Login do usuário"""
-    user = authenticate_user(request.email, request.password)
-    if not user:
-        raise HTTPException(
-            status_code=401,
-            detail="Email ou senha incorretos"
-        )
-    
-    token = f"token_{user['email']}_{generate_id()}"
-    
-    return LoginResponse(
-        success=True,
-        message="Login realizado com sucesso!",
-        token=token,
-        user={
-            "email": user["email"],
-            "name": user["name"],
-            "role": user["role"]
-        }
-    )
-
-@app.get("/api/me")
-async def get_current_user(authorization: str = None):
-    """Retorna dados do usuário atual"""
-    # Simulação simples de autenticação
-    return {
-        "email": "admin@autocred.com",
-        "name": "Administrador AutoCred",
-        "role": "admin",
-        "permissions": ["read", "write", "admin"]
-    }
-
-# =============================================================================
 # DASHBOARD
 # =============================================================================
 
 @app.get("/api/dashboard")
 async def get_dashboard():
-    """Dashboard principal com métricas"""
+    print("📊 Dashboard acessado")
     return {
+        "success": True,
+        "timestamp": get_current_timestamp(),
         "metrics": {
             "total_leads": len(LEADS_DB),
             "leads_this_month": 47,
@@ -353,21 +336,59 @@ async def get_dashboard():
     }
 
 # =============================================================================
+# AUTENTICAÇÃO
+# =============================================================================
+
+@app.post("/api/login", response_model=LoginResponse)
+async def login(request: LoginRequest):
+    print(f"🔐 Tentativa de login: {request.email}")
+    user = authenticate_user(request.email, request.password)
+    if not user:
+        raise HTTPException(
+            status_code=401,
+            detail="Email ou senha incorretos"
+        )
+    
+    token = f"token_{user['email']}_{generate_id()}"
+    
+    return LoginResponse(
+        success=True,
+        message="Login realizado com sucesso!",
+        token=token,
+        user={
+            "email": user["email"],
+            "name": user["name"],
+            "role": user["role"]
+        }
+    )
+
+@app.get("/api/me")
+async def get_current_user(authorization: str = None):
+    print("👤 Dados do usuário solicitados")
+    return {
+        "email": "admin@autocred.com",
+        "name": "Administrador AutoCred",
+        "role": "admin",
+        "permissions": ["read", "write", "admin"]
+    }
+
+# =============================================================================
 # LEADS
 # =============================================================================
 
 @app.get("/api/leads")
 async def get_leads():
-    """Lista todos os leads"""
+    print("👥 Lista de leads solicitada")
     return {
         "success": True,
         "total": len(LEADS_DB),
+        "timestamp": get_current_timestamp(),
         "leads": list(LEADS_DB.values())
     }
 
 @app.post("/api/leads")
 async def create_lead(lead: Lead):
-    """Cria novo lead"""
+    print(f"➕ Criando novo lead: {lead.name}")
     lead_id = generate_id()
     lead_data = lead.dict()
     lead_data["id"] = lead_id
@@ -383,7 +404,7 @@ async def create_lead(lead: Lead):
 
 @app.put("/api/leads/{lead_id}")
 async def update_lead(lead_id: str, lead: Lead):
-    """Atualiza um lead"""
+    print(f"✏️ Atualizando lead: {lead_id}")
     if lead_id not in LEADS_DB:
         raise HTTPException(status_code=404, detail="Lead não encontrado")
     
@@ -401,7 +422,7 @@ async def update_lead(lead_id: str, lead: Lead):
 
 @app.delete("/api/leads/{lead_id}")
 async def delete_lead(lead_id: str):
-    """Remove um lead"""
+    print(f"🗑️ Removendo lead: {lead_id}")
     if lead_id not in LEADS_DB:
         raise HTTPException(status_code=404, detail="Lead não encontrado")
     
@@ -418,16 +439,17 @@ async def delete_lead(lead_id: str):
 
 @app.get("/api/clients")
 async def get_clients():
-    """Lista todos os clientes"""
+    print("💼 Lista de clientes solicitada")
     return {
         "success": True,
         "total": len(CLIENTS_DB),
+        "timestamp": get_current_timestamp(),
         "clients": list(CLIENTS_DB.values())
     }
 
 @app.post("/api/clients")
 async def create_client(client: Client):
-    """Cria novo cliente"""
+    print(f"➕ Criando novo cliente: {client.name}")
     client_id = generate_id()
     client_data = client.dict()
     client_data["id"] = client_id
@@ -447,16 +469,17 @@ async def create_client(client: Client):
 
 @app.get("/api/contracts")
 async def get_contracts():
-    """Lista todos os contratos"""
+    print("📄 Lista de contratos solicitada")
     return {
         "success": True,
         "total": len(CONTRACTS_DB),
+        "timestamp": get_current_timestamp(),
         "contracts": list(CONTRACTS_DB.values())
     }
 
 @app.post("/api/contracts")
 async def create_contract(contract: Contract):
-    """Cria novo contrato"""
+    print(f"➕ Criando novo contrato: {contract.clientName}")
     contract_id = f"C{generate_id()}"
     contract_data = contract.dict()
     contract_data["id"] = contract_id
@@ -476,16 +499,17 @@ async def create_contract(contract: Contract):
 
 @app.get("/api/agents")
 async def get_agents():
-    """Lista todos os agentes IA"""
+    print("🤖 Lista de agentes solicitada")
     return {
         "success": True,
         "total": len(AGENTS_DB),
+        "timestamp": get_current_timestamp(),
         "agents": list(AGENTS_DB.values())
     }
 
 @app.post("/api/agents")
 async def create_agent(agent: Agent):
-    """Cria novo agente IA"""
+    print(f"➕ Criando novo agente: {agent.name}")
     agent_id = generate_id()
     agent_data = agent.dict()
     agent_data["id"] = agent_id
@@ -507,7 +531,7 @@ async def create_agent(agent: Agent):
 
 @app.post("/api/whatsapp/send")
 async def send_whatsapp_message(phone: str, message: str):
-    """Envia mensagem via WhatsApp"""
+    print(f"📱 Enviando WhatsApp para: {phone}")
     return {
         "success": True,
         "message": "Mensagem enviada via WhatsApp",
@@ -517,7 +541,7 @@ async def send_whatsapp_message(phone: str, message: str):
 
 @app.post("/api/sms/send")
 async def send_sms_message(phone: str, message: str):
-    """Envia SMS"""
+    print(f"📧 Enviando SMS para: {phone}")
     return {
         "success": True,
         "message": "SMS enviado com sucesso",
@@ -530,7 +554,7 @@ async def create_sms_campaign(
     file: UploadFile = File(...),
     message: str = Form(...)
 ):
-    """Cria campanha SMS em massa"""
+    print("📧 Criando campanha SMS")
     contents = await file.read()
     csv_data = contents.decode('utf-8')
     reader = csv.DictReader(io.StringIO(csv_data))
@@ -556,9 +580,11 @@ async def create_sms_campaign(
 
 @app.get("/api/analytics/overview")
 async def get_analytics_overview():
-    """Analytics geral do sistema"""
+    print("📈 Analytics solicitado")
     return {
+        "success": True,
         "period": "Last 30 days",
+        "timestamp": get_current_timestamp(),
         "metrics": {
             "total_leads": 127,
             "converted_leads": 23,
@@ -581,29 +607,40 @@ async def get_analytics_overview():
 
 @app.get("/api/environment")
 async def get_environment_info():
-    """Informações do ambiente"""
+    print("🌍 Info do ambiente solicitada")
     return {
         "environment": "🚀 Railway Pro",
         "status": "✅ Production Ready",
-        "version": "2.0.0",
+        "version": "2.0.1",
         "features": "All Enabled",
         "url": "https://autocred.railway.app",
         "docs": "https://autocred.railway.app/docs",
         "database": "Railway PostgreSQL",
-        "storage": "Railway Volume",
+        "storage": "Railway Volume", 
         "monitoring": "Railway Observability",
         "backup": "Automated Daily",
         "ssl": "Enabled",
         "cdn": "Global",
+        "routes_registered": len(app.routes),
         "timestamp": get_current_timestamp()
     }
 
 # =============================================================================
-# STARTUP
+# INICIALIZAÇÃO E DEBUG
 # =============================================================================
+
+print("✅ Todas as rotas registradas")
+print(f"📊 Total de rotas: {len(app.routes)}")
+
+# Listar todas as rotas para debug
+print("🔍 Rotas registradas:")
+for route in app.routes:
+    if hasattr(route, 'path') and hasattr(route, 'methods'):
+        print(f"  {list(route.methods)} {route.path}")
 
 if __name__ == "__main__":
     port = int(os.getenv("PORT", 8001))
+    print("")
     print("🏦 AutoCred Fintech - Sistema Completo")
     print("=" * 50)
     print(f"🚀 Ambiente: Railway Pro")
@@ -611,6 +648,7 @@ if __name__ == "__main__":
     print(f"📚 Docs: https://autocred.railway.app/docs")
     print(f"🔐 Login: admin@autocred.com")
     print(f"🔑 Senha: admin123")
+    print(f"📊 Rotas: {len(app.routes)}")
     print("=" * 50)
     print(f"🎯 Iniciando na porta {port}...")
     
@@ -618,5 +656,6 @@ if __name__ == "__main__":
         app, 
         host="0.0.0.0", 
         port=port,
-        access_log=True
+        access_log=True,
+        log_level="info"
     ) 
