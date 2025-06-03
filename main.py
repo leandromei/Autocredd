@@ -2,6 +2,7 @@
 """
 AutoCred Fintech - Sistema Completo
 Railway Pro - Versão de Produção CORRIGIDA
+Deploy Timestamp: 2025-01-18T12:15:00Z
 """
 
 from fastapi import FastAPI, HTTPException, Depends, Form, UploadFile, File, Request
