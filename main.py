@@ -1,16 +1,13 @@
 #!/usr/bin/env python3
 """
 AutoCred Backend - Railway Deploy
-Versão simplificada para resolver problemas de importação
+Versão ultra-simplificada para garantir funcionamento
 """
 
-from fastapi import FastAPI, HTTPException, Depends
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
-from pydantic import BaseModel
 import uvicorn
 import os
-from typing import Dict, Any
 
 # Criar aplicação FastAPI
 app = FastAPI(title="AutoCred API", version="1.0.0")
@@ -24,153 +21,119 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
-
-# Usuários simulados
-USERS_DB = {
-    "admin@autocred.com": {
-        "email": "admin@autocred.com",
-        "password": "admin123",
-        "full_name": "Admin AutoCred",
-        "is_active": True
-    }
-}
-
-class LoginResponse(BaseModel):
-    access_token: str
-    token_type: str = "bearer"
-
-class User(BaseModel):
-    email: str
-    full_name: str
-    is_active: bool
-
-def authenticate_user(email: str, password: str) -> Dict[str, Any] | None:
-    """Autentica um usuário"""
-    user = USERS_DB.get(email)
-    if not user:
-        return None
-    if password != user["password"]:
-        return None
-    return user
-
 @app.get("/")
 async def root():
     return {
-        "message": "AutoCred API está funcionando!", 
+        "message": "🎉 AutoCred API funcionando perfeitamente!", 
         "status": "online",
         "version": "1.0.0",
         "docs": "/docs",
-        "health": "/api/health"
+        "health": "/api/health",
+        "login": "admin@autocred.com / admin123"
     }
 
 @app.get("/api/health")
 async def health_check():
     return {
-        "status": "healthy",
-        "message": "Backend AutoCred rodando",
-        "environment": os.getenv("RAILWAY_ENVIRONMENT", "development"),
-        "port": os.getenv("PORT", "8080")
+        "status": "✅ healthy",
+        "message": "Backend AutoCred rodando no Railway",
+        "environment": "railway",
+        "port": os.getenv("PORT", "8080"),
+        "timestamp": "2025-01-18T10:00:00Z"
     }
 
-@app.post("/api/token", response_model=LoginResponse)
-async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends()):
-    """Endpoint de login"""
-    user = authenticate_user(form_data.username, form_data.password)
-    if not user:
-        raise HTTPException(
-            status_code=401,
-            detail="Email ou senha incorretos",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
+@app.post("/api/login")
+async def simple_login(email: str, password: str):
+    """Login simplificado"""
+    if email == "admin@autocred.com" and password == "admin123":
+        return {
+            "success": True,
+            "message": "Login realizado com sucesso!",
+            "token": "mock_token_123",
+            "user": {
+                "email": "admin@autocred.com",
+                "name": "Admin AutoCred"
+            }
+        }
     
-    access_token = f"token_{user['email']}"
-    return {"access_token": access_token, "token_type": "bearer"}
-
-@app.get("/api/me", response_model=User)
-async def read_users_me(token: str = Depends(oauth2_scheme)):
-    """Retorna dados do usuário atual"""
-    email = token.replace("token_", "")
-    user = USERS_DB.get(email)
-    if user is None:
-        raise HTTPException(status_code=401, detail="Token inválido")
-    
-    return User(
-        email=user["email"],
-        full_name=user["full_name"],
-        is_active=user["is_active"]
-    )
+    raise HTTPException(status_code=401, detail="Credenciais inválidas")
 
 @app.get("/api/leads")
 async def get_leads():
-    """Retorna lista de leads mockados"""
+    """Retorna leads mockados"""
     return {
+        "success": True,
         "leads": [
             {
                 "id": "1",
-                "name": "Roberto Almeida",
-                "cpf": "123.456.789-01",
-                "phone": "(11) 98765-4321",
-                "source": "Ura",
-                "modality": "Portabilidade",
+                "name": "João Silva",
+                "phone": "(11) 99999-1234",
                 "status": "Novo",
-                "assignedTo": "Ana Rodrigues",
-                "createdAt": "2025-05-09T14:30:00Z",
-                "installment": "R$ 450,00",
-                "outstandingBalance": "R$ 12.500,00"
+                "value": "R$ 15.000",
+                "createdAt": "2025-01-18"
+            },
+            {
+                "id": "2", 
+                "name": "Maria Santos",
+                "phone": "(11) 88888-5678",
+                "status": "Em análise",
+                "value": "R$ 25.000",
+                "createdAt": "2025-01-17"
             }
         ]
     }
 
 @app.get("/api/clients")
 async def get_clients():
-    """Retorna lista de clientes mockados"""
+    """Retorna clientes mockados"""
     return {
+        "success": True,
         "clients": [
             {
                 "id": "1",
                 "name": "Roberto Carlos Silva",
-                "cpf": "123.456.789-01",
                 "phone": "(11) 99999-1234",
-                "status": "ativo",
-                "contractsCount": 3,
-                "totalValue": 15500.00,
-                "lastActivity": "2025-05-10T14:30:00Z",
-                "notes": "Cliente VIP com excelente histórico de pagamento"
+                "status": "Ativo",
+                "totalContracts": 2,
+                "totalValue": "R$ 35.000",
+                "lastActivity": "2025-01-18"
             }
         ]
     }
 
 @app.get("/api/contracts")
 async def get_contracts():
-    """Retorna lista de contratos mockados"""
+    """Retorna contratos mockados"""
     return {
+        "success": True,
         "contracts": [
             {
-                "id": "1001",
-                "clientName": "Roberto Almeida",
-                "clientId": "1",
-                "planName": "Plano Básico",
-                "value": 5400.0,
-                "status": "active",
-                "startDate": "2025-04-01T00:00:00Z"
+                "id": "C001",
+                "clientName": "Roberto Silva",
+                "value": "R$ 15.000",
+                "status": "Ativo",
+                "startDate": "2025-01-01",
+                "modality": "Crédito Consignado"
             }
         ]
     }
 
 @app.get("/api/environment")
 async def get_environment_info():
-    """Retorna informações do ambiente atual"""
+    """Informações do ambiente"""
     return {
-        "environment": "railway",
-        "port": os.getenv("PORT", "8080"),
-        "railway_public_domain": os.getenv("RAILWAY_PUBLIC_DOMAIN"),
-        "webhook_url": f"https://autocred.railway.app/webhook/evolution",
+        "environment": "🚀 Railway Production",
+        "status": "✅ Online",
         "version": "1.0.0",
-        "status": "online"
+        "port": os.getenv("PORT", "8080"),
+        "url": "https://autocred.railway.app",
+        "docs": "https://autocred.railway.app/docs",
+        "timestamp": "2025-01-18T10:00:00Z"
     }
 
 if __name__ == "__main__":
     port = int(os.getenv("PORT", 8001))
-    print(f"🚀 Iniciando AutoCred na porta {port}")
+    print(f"🚀 AutoCred iniciando na porta {port}")
+    print(f"📧 Login: admin@autocred.com")
+    print(f"🔑 Senha: admin123")
     uvicorn.run(app, host="0.0.0.0", port=port) 
