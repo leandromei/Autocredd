@@ -1,0 +1,11 @@
+frontend_bolt/
+node_modules/
+*.log
+.git/
+.vscode/
+*.md
+__pycache__/
+*.pyc
+.env
+*.bat
+*.ps1 
