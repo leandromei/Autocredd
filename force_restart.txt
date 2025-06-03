@@ -1,0 +1,2 @@
+# Força restart - ${new Date().toISOString()}
+Sistema atualizado em: 18/01/2025 às 15:30 
