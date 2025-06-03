@@ -639,24 +639,15 @@ for route in app.routes:
     if hasattr(route, 'path') and hasattr(route, 'methods'):
         print(f"  {list(route.methods)} {route.path}")
 
-if __name__ == "__main__":
-    port = int(os.getenv("PORT", 8001))
-    print("")
-    print("🏦 AutoCred Fintech - Sistema Completo")
-    print("=" * 50)
-    print(f"🚀 Ambiente: Railway Pro")
-    print(f"🌐 URL: https://autocred.railway.app")
-    print(f"📚 Docs: https://autocred.railway.app/docs")
-    print(f"🔐 Login: admin@autocred.com")
-    print(f"🔑 Senha: admin123")
-    print(f"📊 Rotas: {len(app.routes)}")
-    print("=" * 50)
-    print(f"🎯 Iniciando na porta {port}...")
-    
-    uvicorn.run(
-        app, 
-        host="0.0.0.0", 
-        port=port,
-        access_log=True,
-        log_level="info"
-    ) 
+# Configuração para Railway
+print("")
+print("🏦 AutoCred Fintech - Sistema Completo")
+print("=" * 50)
+print(f"🚀 Ambiente: Railway Pro")
+print(f"🌐 URL: https://autocred.railway.app")
+print(f"📚 Docs: https://autocred.railway.app/docs")
+print(f"🔐 Login: admin@autocred.com")
+print(f"🔑 Senha: admin123")
+print(f"📊 Rotas: {len(app.routes)}")
+print("=" * 50)
+print("🎯 Sistema pronto para Railway!") 
