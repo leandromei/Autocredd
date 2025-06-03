@@ -5,6 +5,7 @@
   "deploy": {
     "restartPolicyType": "ON_FAILURE",
     "healthcheckPath": "/api/health",
-    "healthcheckTimeout": 300
+    "healthcheckTimeout": 600,
+    "startCommand": "uvicorn main:app --host 0.0.0.0 --port $PORT"
   }
 } 
