@@ -253,31 +253,13 @@ print("✅ Utilidades configuradas")
 async def root():
     print("🌐 Rota raiz acessada")
     return {
-        "🏦": "AutoCred Fintech",
-        "status": "✅ Online",
-        "version": "2.0.1",
-        "environment": "🚀 Railway Pro",
-        "timestamp": get_current_timestamp(),
-        "features": [
-            "📊 Dashboard Avançado",
-            "👥 Gestão de Leads",
-            "💼 CRM Completo",
-            "📄 Contratos Digitais",
-            "🤖 Agentes IA",
-            "📱 WhatsApp Integration",
-            "📧 SMS Campaigns",
-            "📈 Analytics"
-        ],
-        "endpoints": {
-            "login": "POST /api/login",
-            "docs": "GET /docs",
-            "health": "GET /api/health",
-            "dashboard": "GET /api/dashboard"
-        },
-        "credentials": {
-            "email": "admin@autocred.com",
-            "password": "admin123"
-        }
+        "status": "✅ AutoCred Online",
+        "message": "🏦 AutoCred Fintech API está funcionando!",
+        "version": "2.1.0",
+        "environment": "Railway Pro",
+        "docs": "/docs",
+        "health": "/api/health",
+        "dashboard": "/api/dashboard"
     }
 
 @app.get("/api/health")
