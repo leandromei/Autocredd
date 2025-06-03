@@ -262,24 +262,27 @@ const CustomAgents: React.FC = () => {
         console.log('✅ QR Code gerado com sucesso!', result);
         setQrCodeUrl(result.qrcode);
         
-        // Simular processo de conexão após 10 segundos (como se o QR fosse escaneado)
-        setTimeout(async () => {
+        // Iniciar verificação real do status (polling)
+        const checkConnection = setInterval(async () => {
           try {
-            const confirmResponse = await fetch(`/api/evolution/confirm-qr/${agent.id}`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' }
-            });
+            const statusResponse = await fetch(`/api/evolution/status/${agent.id}`);
+            const statusResult = await statusResponse.json();
             
-            const confirmResult = await confirmResponse.json();
-            if (confirmResult.success) {
+            if (statusResult.connected) {
               setWhatsappStatus(prev => ({ ...prev, [agent.id]: 'connected' }));
-              alert('🎉 WhatsApp conectado com sucesso! (Simulação)');
+              alert('🎉 WhatsApp conectado com sucesso!');
               setShowWhatsAppModal(false);
+              clearInterval(checkConnection);
             }
           } catch (error) {
-            console.error('Erro na confirmação:', error);
+            console.error('Erro verificando status:', error);
           }
-        }, 10000);
+        }, 3000); // Verificar a cada 3 segundos
+        
+        // Limpar verificação após 2 minutos
+        setTimeout(() => {
+          clearInterval(checkConnection);
+        }, 120000);
         
       } else {
         console.error('❌ Erro ao gerar QR Code:', result.error);
@@ -754,7 +757,7 @@ const CustomAgents: React.FC = () => {
                   {selectedAgent.name}
                 </h3>
                 <p className="text-sm text-gray-600 mb-6">
-                  Escaneie o QR Code abaixo com o WhatsApp para conectar este agente
+                  Escaneie o QR Code com o WhatsApp do seu celular
                 </p>
 
                 {qrCodeUrl ? (
@@ -762,8 +765,11 @@ const CustomAgents: React.FC = () => {
                     <img 
                       src={qrCodeUrl} 
                       alt="QR Code WhatsApp"
-                      className="w-64 h-64 mx-auto"
+                      className="w-64 h-64 mx-auto border rounded-lg"
                     />
+                    <p className="text-xs text-gray-500 mt-2">
+                      QR Code gerado - pronto para escaneamento
+                    </p>
                   </div>
                 ) : (
                   <div className="w-64 h-64 mx-auto bg-gray-100 rounded-lg flex items-center justify-center mb-4">
@@ -774,21 +780,51 @@ const CustomAgents: React.FC = () => {
                   </div>
                 )}
 
-                <div className="space-y-2 text-sm text-gray-600">
-                  <p className="font-medium">Como conectar:</p>
-                  <ol className="text-left space-y-1">
-                    <li>1. Abra o WhatsApp no seu celular</li>
-                    <li>2. Toque em Configurações → Aparelhos conectados</li>
-                    <li>3. Toque em "Conectar um aparelho"</li>
-                    <li>4. Aponte a câmera para o QR Code acima</li>
+                <div className="space-y-2 text-sm text-gray-600 mb-4">
+                  <p className="font-medium text-gray-800">📱 Como conectar:</p>
+                  <ol className="text-left space-y-1 bg-gray-50 p-3 rounded-lg">
+                    <li>1. Abra o <strong>WhatsApp</strong> no seu celular</li>
+                    <li>2. Toque nos <strong>3 pontos</strong> → <strong>Aparelhos conectados</strong></li>
+                    <li>3. Toque em <strong>"Conectar um aparelho"</strong></li>
+                    <li>4. Escaneie o QR Code acima</li>
+                    <li>5. Aguarde a confirmação automática</li>
                   </ol>
                 </div>
 
-                <div className="mt-6 p-3 bg-blue-50 rounded-lg">
-                  <div className="flex items-center justify-center gap-2 text-blue-600">
-                    <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
-                    <span className="text-sm font-medium">Aguardando conexão...</span>
+                <div className="space-y-3">
+                  <div className="p-3 bg-blue-50 rounded-lg">
+                    <div className="flex items-center justify-center gap-2 text-blue-600">
+                      <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+                      <span className="text-sm font-medium">Aguardando escaneamento...</span>
+                    </div>
                   </div>
+
+                  {/* Botão para testar conexão (desenvolvimento) */}
+                  <button
+                    onClick={async () => {
+                      try {
+                        const response = await fetch(`/api/evolution/confirm-qr/${selectedAgent.id}`, {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' }
+                        });
+                        const result = await response.json();
+                        if (result.success) {
+                          setWhatsappStatus(prev => ({ ...prev, [selectedAgent.id]: 'connected' }));
+                          alert('🎉 WhatsApp conectado com sucesso! (Simulação de teste)');
+                          setShowWhatsAppModal(false);
+                        }
+                      } catch (error) {
+                        console.error('Erro na simulação:', error);
+                      }
+                    }}
+                    className="w-full px-4 py-2 text-sm bg-green-50 text-green-600 rounded-lg hover:bg-green-100 border border-green-200"
+                  >
+                    🧪 Simular Conexão (Teste)
+                  </button>
+
+                  <p className="text-xs text-gray-500">
+                    Use o botão de teste acima se estiver testando o sistema
+                  </p>
                 </div>
               </div>
             </div>

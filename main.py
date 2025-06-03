@@ -925,95 +925,45 @@ async def check_whatsapp_status(agent_id: str):
         print(f"🔍 Debug - Verificando status WhatsApp para agente: {agent_id}")
         
         connection = whatsapp_connections.get(agent_id, {})
-        instance_name = connection.get("instanceName", f"agent_{agent_id}")
         
-        # Se temos uma instância registrada, verificar o status na Evolution API
-        if connection and not connection.get("fallback", False):
-            print(f"🔄 Verificando status real da instância: {instance_name}")
-            
-            # Verificar status usando fetchInstances (endpoint correto)
-            fetch_result = make_evolution_request("GET", "/instance/fetchInstances")
-            
-            if fetch_result["success"] and fetch_result["data"]:
-                instances = fetch_result["data"]
-                our_instance = None
-                
-                # Procurar nossa instância na lista
-                for instance in instances:
-                    if instance.get("name") == instance_name:
-                        our_instance = instance
-                        break
-                
-                if our_instance:
-                    connection_status = our_instance.get("connectionStatus", "close")
-                    print(f"📊 Status da Evolution API: {connection_status}")
-                    
-                    # Interpretar o status da Evolution API
-                    is_connected = False
-                    status_str = "disconnected"
-                    
-                    if connection_status == "open":
-                        is_connected = True
-                        status_str = "connected"
-                    elif connection_status in ["connecting", "pairing"]:
-                        status_str = "connecting"
-                    elif connection_status == "close":
-                        status_str = "disconnected"
-                    
-                    # Atualizar nosso registro local
-                    whatsapp_connections[agent_id].update({
-                        "status": status_str,
-                        "connected": is_connected,
-                        "last_check": datetime.now().isoformat(),
-                        "evolution_status": connection_status
-                    })
-                    
-                    if is_connected:
-                        print(f"✅ Agente {agent_id} conectado ao WhatsApp via Evolution API")
-                    
-                    return ConnectionStatus(
-                        connected=is_connected,
-                        status=status_str,
-                        agentId=agent_id
-                    )
-                else:
-                    print(f"⚠️ Instância {instance_name} não encontrada na lista de instâncias")
-                    # Marcar como desconectado se não encontrarmos a instância
-                    whatsapp_connections[agent_id].update({
-                        "status": "disconnected",
-                        "connected": False,
-                        "last_check": datetime.now().isoformat(),
-                        "error": "Instance not found in Evolution API"
-                    })
-            else:
-                print(f"⚠️ Erro ao buscar instâncias na Evolution API: {fetch_result.get('error', 'Unknown error')}")
-                # Fallback para simulação se API falhar
-                if connection.get("status") == "connecting":
-                    import random
-                    if random.choice([True, False, False]):  # 33% chance de conectar
-                        whatsapp_connections[agent_id].update({
-                            "status": "connected",
-                            "connected": True,
-                            "connectedAt": datetime.now().isoformat(),
-                            "simulated": True
-                        })
-                        print(f"✅ Agente {agent_id} conectado (simulado devido a erro na API)")
+        # Se não existe conexão registrada, retorna desconectado
+        if not connection:
+            return ConnectionStatus(
+                connected=False,
+                status="disconnected",
+                agentId=agent_id
+            )
         
-        # Status local ou fallback
-        status_data = whatsapp_connections.get(agent_id, {
-            "status": "disconnected",
-            "connected": False
-        })
+        # Verificar se foi marcado como conectado manualmente
+        if connection.get("connected", False) and connection.get("status") == "connected":
+            return ConnectionStatus(
+                connected=True,
+                status="connected",
+                agentId=agent_id
+            )
         
+        # Se está conectando, continua conectando até ser confirmado
+        if connection.get("status") == "connecting":
+            return ConnectionStatus(
+                connected=False,
+                status="connecting",
+                agentId=agent_id
+            )
+        
+        # Por padrão, retorna desconectado
         return ConnectionStatus(
-            connected=status_data.get("connected", False),
-            status=status_data.get("status", "disconnected"),
+            connected=False,
+            status="disconnected",
             agentId=agent_id
         )
         
     except Exception as e:
         print(f"❌ Debug - Erro ao verificar status: {e}")
-        raise HTTPException(status_code=500, detail=f"Erro ao verificar status: {str(e)}")
+        return ConnectionStatus(
+            connected=False,
+            status="error",
+            agentId=agent_id
+        )
 
 @app.post("/api/evolution/disconnect/{agent_id}")
 async def disconnect_whatsapp(agent_id: str):

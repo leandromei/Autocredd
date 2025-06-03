@@ -7,8 +7,9 @@ export default defineConfig({
   server: {
     proxy: {
       '/api': {
-        target: 'http://localhost:8001',
+        target: 'https://autocredd-production.up.railway.app',
         changeOrigin: true,
+        secure: true,
       },
     },
   },
