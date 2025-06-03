@@ -7,7 +7,9 @@ Deploy Timestamp: 2025-01-18T12:15:00Z
 
 from fastapi import FastAPI, HTTPException, Depends, Form, UploadFile, File, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse, FileResponse
+from fastapi.responses import JSONResponse, FileResponse, HTMLResponse
+from fastapi.openapi.docs import get_swagger_ui_html
+from fastapi.openapi.utils import get_openapi
 from pydantic import BaseModel, EmailStr
 import uvicorn
 import os
@@ -261,6 +263,23 @@ async def root():
         "health": "/api/health",
         "dashboard": "/api/dashboard"
     }
+
+@app.get("/docs", include_in_schema=False)
+async def custom_swagger_ui_html():
+    return get_swagger_ui_html(
+        openapi_url="/openapi.json",
+        title="🏦 AutoCred Fintech API",
+        swagger_favicon_url="https://fastapi.tiangolo.com/img/favicon.png"
+    )
+
+@app.get("/openapi.json", include_in_schema=False)
+async def get_openapi_endpoint():
+    return get_openapi(
+        title="🏦 AutoCred Fintech API",
+        version="2.1.1",
+        description="Sistema completo de crédito consignado com IA",
+        routes=app.routes
+    )
 
 @app.get("/api/health")
 async def health_check():
