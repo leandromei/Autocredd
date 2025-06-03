@@ -1,0 +1,7 @@
+{
+  "name": "Agente Teste Final",
+  "description": "Agente criado para testar o sistema corrigido",
+  "personality_id": "vendedor_especialista", 
+  "custom_prompt": "Seja muito atencioso e focado em resultados de vendas",
+  "configuration": {}
+} 

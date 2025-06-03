@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug Login AutoCred</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 600px; margin: 50px auto; padding: 20px; }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; }
+        input { width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; }
+        button { background: #007bff; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; }
+        button:hover { background: #0056b3; }
+        .result { margin-top: 20px; padding: 15px; border-radius: 4px; white-space: pre-wrap; }
+        .success { background: #d4edda; border: 1px solid #c3e6cb; color: #155724; }
+        .error { background: #f8d7da; border: 1px solid #f5c6cb; color: #721c24; }
+        .info { background: #d1ecf1; border: 1px solid #bee5eb; color: #0c5460; }
+    </style>
+</head>
+<body>
+    <h1>🔐 Debug Login AutoCred</h1>
+    
+    <form id="loginForm">
+        <div class="form-group">
+            <label for="username">Email:</label>
+            <input type="email" id="username" value="admin@autocred.com" required>
+        </div>
+        
+        <div class="form-group">
+            <label for="password">Senha:</label>
+            <input type="password" id="password" value="admin123" required>
+        </div>
+        
+        <div class="form-group">
+            <label for="apiUrl">URL da API:</label>
+            <input type="text" id="apiUrl" value="http://localhost:8001" required>
+        </div>
+        
+        <button type="submit">🚀 Testar Login</button>
+    </form>
+    
+    <div id="result"></div>
+
+    <script>
+        document.getElementById('loginForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            const apiUrl = document.getElementById('apiUrl').value;
+            const resultDiv = document.getElementById('result');
+            
+            // Limpar resultado anterior
+            resultDiv.innerHTML = '';
+            
+            try {
+                // Mostrar progresso
+                resultDiv.className = 'result info';
+                resultDiv.textContent = '🔄 Testando conexão...';
+                
+                // Teste 1: Health check
+                console.log('1. Testando health check...');
+                const healthResponse = await fetch(`${apiUrl}/api/health`);
+                const healthData = await healthResponse.json();
+                
+                console.log('Health check resultado:', healthData);
+                
+                // Teste 2: Login
+                console.log('2. Testando login...');
+                resultDiv.textContent = '🔄 Fazendo login...';
+                
+                const formData = new FormData();
+                formData.append('username', username);
+                formData.append('password', password);
+                
+                const loginResponse = await fetch(`${apiUrl}/api/token`, {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                console.log('Login response status:', loginResponse.status);
+                console.log('Login response headers:', [...loginResponse.headers.entries()]);
+                
+                if (loginResponse.ok) {
+                    const loginData = await loginResponse.json();
+                    console.log('Login data:', loginData);
+                    
+                    // Salvar token no localStorage (como faz o frontend real)
+                    localStorage.setItem('token', loginData.access_token);
+                    
+                    // Teste 3: Verificar token
+                    console.log('3. Testando token...');
+                    const meResponse = await fetch(`${apiUrl}/api/me`, {
+                        headers: {
+                            'Authorization': `Bearer ${loginData.access_token}`
+                        }
+                    });
+                    
+                    if (meResponse.ok) {
+                        const userData = await meResponse.json();
+                        console.log('User data:', userData);
+                        
+                        resultDiv.className = 'result success';
+                        resultDiv.textContent = `✅ LOGIN SUCESSO!
+                        
+Token: ${loginData.access_token.substring(0, 50)}...
+Usuário: ${userData.email}
+Admin: ${userData.is_admin}
+
+🎯 O login está funcionando corretamente!
+Verifique se você está acessando: http://localhost:5180/login`;
+                    } else {
+                        const meError = await meResponse.text();
+                        console.error('Me endpoint error:', meError);
+                        
+                        resultDiv.className = 'result error';
+                        resultDiv.textContent = `❌ TOKEN INVÁLIDO
+                        
+Status: ${meResponse.status}
+Erro: ${meError}`;
+                    }
+                } else {
+                    const loginError = await loginResponse.text();
+                    console.error('Login error:', loginError);
+                    
+                    resultDiv.className = 'result error';
+                    resultDiv.textContent = `❌ ERRO NO LOGIN
+                    
+Status: ${loginResponse.status}
+Erro: ${loginError}
+
+Verifique as credenciais:
+- Email: admin@autocred.com  
+- Senha: admin123`;
+                }
+                
+            } catch (error) {
+                console.error('Erro de rede:', error);
+                
+                resultDiv.className = 'result error';
+                resultDiv.textContent = `❌ ERRO DE CONEXÃO
+                
+Erro: ${error.message}
+
+Verifique se:
+1. O backend está rodando na porta 8001
+2. Não há bloqueio de CORS
+3. A URL da API está correta`;
+            }
+        });
+        
+        // Testar automaticamente quando carregar a página
+        window.addEventListener('load', function() {
+            console.log('🔍 Página carregada, iniciando teste automático...');
+            setTimeout(() => {
+                document.getElementById('loginForm').dispatchEvent(new Event('submit'));
+            }, 1000);
+        });
+    </script>
+</body>
+</html> 
