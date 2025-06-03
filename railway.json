@@ -3,7 +3,6 @@
     "builder": "NIXPACKS"
   },
   "deploy": {
-    "startCommand": "cd backend_autocred && python api_simple.py",
     "restartPolicyType": "ON_FAILURE",
     "healthcheckPath": "/api/health",
     "healthcheckTimeout": 300
