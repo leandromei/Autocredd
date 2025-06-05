@@ -5,10 +5,19 @@ import { RefreshCw, ExternalLink, Smartphone, Wifi, AlertCircle } from 'lucide-r
 
 interface WhatsAppQRCodeProps {
   instanceName?: string;
+  agentId?: string;
+  agentName?: string;
   onConnected?: () => void;
+  onError?: (error: string) => void;
 }
 
-export const WhatsAppQRCode: React.FC<WhatsAppQRCodeProps> = ({ instanceName, onConnected }) => {
+export const WhatsAppQRCode: React.FC<WhatsAppQRCodeProps> = ({ 
+  instanceName, 
+  agentId, 
+  agentName, 
+  onConnected, 
+  onError 
+}) => {
   const [qrCode, setQRCode] = useState<string>('');
   const [status, setStatus] = useState<string>('');
   const [error, setError] = useState<string>('');
@@ -21,28 +30,58 @@ export const WhatsAppQRCode: React.FC<WhatsAppQRCodeProps> = ({ instanceName, on
     try {
       setIsLoading(true);
       setError('');
-      setStatus('Conectando à Evolution API via WebSocket...');
+      setStatus('Conectando WhatsApp para agente...');
       
-      console.log('🚀 Iniciando conexão WhatsApp com WebSocket...');
+      console.log('🚀 Iniciando conexão WhatsApp para agente:', agentId || instanceName);
       
-      // Tentar obter QR Code via WebSocket
-      const qrResult = await whatsappService.getQRCode(instanceName);
-      
-      console.log('📱 QR Result via WebSocket:', qrResult);
-      
-      if (qrResult.qrCode) {
-        console.log('✅ QR Code REAL obtido via WebSocket!');
-        setQRCode(qrResult.qrCode);
-        setStatus('QR Code gerado via WebSocket! Escaneie com seu WhatsApp.');
-        setConnectedInstance(qrResult.instance);
+      if (agentId) {
+        // Usar endpoint específico para agentes
+        const response = await fetch(`/api/evolution/connect-agent/${agentId}`, {
+          method: 'POST'
+        });
         
-        // Iniciar verificação de status
-        startStatusPolling(qrResult.instance);
+        if (!response.ok) {
+          throw new Error(`Erro ao conectar agente: ${response.status}`);
+        }
+        
+        const qrResult = await response.json();
+        console.log('📱 QR Result para agente:', qrResult);
+        
+        if (qrResult.success && qrResult.qrcode) {
+          console.log('✅ QR Code obtido para agente!');
+          setQRCode(qrResult.qrcode);
+          setStatus(`QR Code gerado para ${agentName || 'agente'}! Escaneie com seu WhatsApp.`);
+          setConnectedInstance(agentId);
+          
+          // Iniciar verificação de status
+          startStatusPolling(agentId);
+        } else if (qrResult.message) {
+          setError(qrResult.message);
+        }
+      } else {
+        // Fallback para método antigo com WebSocket
+        const qrResult = await whatsappService.getQRCode(instanceName);
+        
+        console.log('📱 QR Result via WebSocket:', qrResult);
+        
+        if (qrResult.qrCode) {
+          console.log('✅ QR Code REAL obtido via WebSocket!');
+          setQRCode(qrResult.qrCode);
+          setStatus('QR Code gerado via WebSocket! Escaneie com seu WhatsApp.');
+          setConnectedInstance(qrResult.instance);
+          
+          // Iniciar verificação de status
+          startStatusPolling(qrResult.instance);
+        }
       }
       
     } catch (err: any) {
-      console.error('❌ Erro ao inicializar via WebSocket:', err);
-      setError(err.message || 'Erro ao conectar WhatsApp via WebSocket');
+      console.error('❌ Erro ao inicializar:', err);
+      const errorMessage = err.message || 'Erro ao conectar WhatsApp';
+      setError(errorMessage);
+      if (onError) {
+        onError(errorMessage);
+      }
     } finally {
       setIsLoading(false);
     }
@@ -51,10 +90,20 @@ export const WhatsAppQRCode: React.FC<WhatsAppQRCodeProps> = ({ instanceName, on
   const startStatusPolling = (instance: string) => {
     const statusCheck = setInterval(async () => {
       try {
-        const statusResult = await whatsappService.getInstanceStatus(instance);
+        let statusResult;
+        
+        if (agentId) {
+          // Verificar status para agente específico
+          const response = await fetch(`/api/evolution/status/${instance}`);
+          statusResult = await response.json();
+        } else {
+          // Fallback para método antigo
+          statusResult = await whatsappService.getInstanceStatus(instance);
+        }
+        
         console.log('📊 Status check:', statusResult);
         
-        if (statusResult.status === 'open') {
+        if (statusResult.connected || statusResult.status === 'open') {
           console.log('🎉 WhatsApp conectado!');
           setStatus('✅ WhatsApp conectado com sucesso!');
           clearInterval(statusCheck);
@@ -96,13 +145,19 @@ export const WhatsAppQRCode: React.FC<WhatsAppQRCodeProps> = ({ instanceName, on
         <div className="flex items-center justify-center gap-2 mb-2">
           <Smartphone className="w-5 h-5 text-green-600" />
           <h3 className="text-lg font-semibold text-gray-900">
-            Conectar WhatsApp
+            {agentName ? `Conectar WhatsApp - ${agentName}` : 'Conectar WhatsApp'}
           </h3>
         </div>
         
+        {agentId && (
+          <p className="text-sm text-blue-600 font-medium">
+            🤖 Agente ID: {agentId}
+          </p>
+        )}
+        
         {connectedInstance && (
           <p className="text-sm text-green-600 font-medium">
-            ✅ Instância real: {connectedInstance}
+            ✅ Instância: {connectedInstance}
           </p>
         )}
       </div>

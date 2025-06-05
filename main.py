@@ -82,6 +82,18 @@ print(f"🚀 Porta: {PORT}")
 EVOLUTION_API_URL = os.getenv("EVOLUTION_API_URL", "http://localhost:8081")
 EVOLUTION_API_KEY = os.getenv("EVOLUTION_API_KEY", "429683C4C977415CAAFCCE10F7D57E11")
 
+# WhatsApp Session Configuration
+CONFIG_SESSION_PHONE_VERSION = "2.3000.1023204200"
+WHATSAPP_DEFAULT_CONFIG = {
+    "version": [2, 3000, 1023204200],
+    "session_phone_version": CONFIG_SESSION_PHONE_VERSION,
+    "browser": ["AutoCred", "Chrome", "120.0.0"],
+    "platform": "AutoCred Business",
+    "markOnlineOnConnect": True,
+    "syncFullHistory": False,
+    "defaultQueryTimeoutMs": 30000
+}
+
 # SMS API Configuration
 SMS_API_BASE_URL = "https://api.smsshortcode.com.br/v1"
 SMS_TOKEN = os.getenv("SMS_TOKEN", "seu_token_aqui")
@@ -195,6 +207,42 @@ USERS_DB = {
 # Listas globais para simular banco de dados
 created_clients = []
 created_contracts = []
+
+# Helper function para criação automática de instâncias WhatsApp
+async def create_whatsapp_instance_for_agent(agent_id: str, instance_name: str):
+    """Helper function para criar instância WhatsApp automaticamente para agente"""
+    try:
+        # Dados para criar a instância
+        instance_data = {
+            "instanceName": instance_name,
+            "integration": "WHATSAPP-BAILEYS",
+            "token": EVOLUTION_API_KEY,
+            "webhook": WEBHOOK_URL,
+            "webhook_by_events": True,
+            "webhook_base64": False,
+            "events": ["APPLICATION_STARTUP", "QRCODE_UPDATED", "CONNECTION_UPDATE", 
+                      "MESSAGES_UPSERT", "MESSAGES_UPDATE", "SEND_MESSAGE"],
+            "reject_call": False,
+            "msg_retry_count": 3,
+            "business_hours": {"monday": "09:00-18:00", "tuesday": "09:00-18:00", 
+                             "wednesday": "09:00-18:00", "thursday": "09:00-18:00", 
+                             "friday": "09:00-18:00"},
+            **WHATSAPP_DEFAULT_CONFIG
+        }
+        
+        # Tentar criar na Evolution API
+        result = make_evolution_request("POST", "/instance/create", instance_data)
+        
+        if result.get("success"):
+            print(f"✅ Instância WhatsApp {instance_name} criada para agente {agent_id}")
+            return {"success": True, "instance": instance_name, "data": result.get("data")}
+        else:
+            print(f"⚠️ Falha ao criar instância WhatsApp: {result.get('error')}")
+            return {"success": False, "error": result.get("error")}
+            
+    except Exception as e:
+        print(f"❌ Erro ao criar instância WhatsApp: {e}")
+        return {"success": False, "error": str(e)}
 
 class LoginResponse(BaseModel):
     access_token: str
@@ -1386,49 +1434,208 @@ class ChatResponse(BaseModel):
 created_agents = []
 agent_personalities = [
     {
-        "id": "friendly",
-        "name": "Amigável",
-        "description": "Personalidade acolhedora e simpática",
-        "tone": "amigável",
-        "expertise": ["atendimento", "vendas"],
-        "use_cases": ["suporte", "vendas", "relacionamento"]
+        "id": "vendas_consultivo",
+        "name": "Vendas Consultivo",
+        "description": "Especialista em vendas consultivas e relacionamento com clientes de crédito",
+        "tone": "consultivo",
+        "expertise": ["vendas", "crédito", "negociação", "relacionamento"],
+        "use_cases": ["qualificação de leads", "apresentação de produtos", "fechamento de vendas"]
     },
     {
-        "id": "professional",
-        "name": "Profissional",
-        "description": "Personalidade formal e técnica",
+        "id": "suporte_especializado",
+        "name": "Suporte Especializado",
+        "description": "Atendimento especializado em produtos financeiros e resolução de problemas",
         "tone": "profissional",
-        "expertise": ["consultoria", "suporte técnico"],
-        "use_cases": ["consultoria", "suporte", "análises"]
+        "expertise": ["suporte técnico", "produtos financeiros", "resolução de problemas"],
+        "use_cases": ["dúvidas sobre contratos", "problemas técnicos", "orientações"]
     },
     {
-        "id": "empathetic",
-        "name": "Empático",
-        "description": "Personalidade compreensiva e acolhedora",
+        "id": "relacionamento_humanizado",
+        "name": "Relacionamento Humanizado",
+        "description": "Foco em criar relacionamentos próximos e humanizados com os clientes",
         "tone": "empático",
-        "expertise": ["relacionamento", "suporte"],
-        "use_cases": ["atendimento humanizado", "resolução de conflitos"]
+        "expertise": ["relacionamento", "retenção", "fidelização"],
+        "use_cases": ["pós-venda", "retenção", "relacionamento contínuo"]
+    },
+    {
+        "id": "prospeccao_ativa",
+        "name": "Prospecção Ativa",
+        "description": "Especialista em prospecção ativa e geração de leads qualificados",
+        "tone": "dinâmico",
+        "expertise": ["prospecção", "qualificação", "cold calling"],
+        "use_cases": ["prospecção ativa", "qualificação de leads", "abordagem inicial"]
     }
 ]
 
 agent_templates = [
     {
-        "id": "vendedor_credito",
-        "name": "Vendedor de Crédito",
+        "id": "vendedor_credito_consignado",
+        "name": "Vendedor Crédito Consignado",
         "category": "Vendas",
-        "description": "Especialista em vendas de produtos de crédito",
-        "personality_id": "friendly",
-        "suggested_prompt": "Você é um especialista em vendas de produtos de crédito. Seja persuasivo mas respeitoso.",
-        "configuration": {}
+        "description": "Especialista em crédito consignado para INSS e servidores públicos",
+        "personality_id": "vendas_consultivo",
+        "suggested_prompt": """Você é Carla, especialista em crédito consignado da AutoCred. 
+
+EXPERTISE: Crédito consignado INSS, servidores públicos e privados
+OBJETIVOS: Qualificar leads, apresentar vantagens e fechar vendas
+
+ABORDAGEM:
+- Seja consultiva, não apenas vendedora
+- Identifique necessidades reais do cliente
+- Destaque benefícios: menores juros, parcelas descontadas diretamente
+- Qualifique: margem consignável, tempo de aposentadoria, renda
+- Ofereça simulações personalizadas
+
+SCRIPT INICIAL:
+"Olá! Sou a Carla da AutoCred, especialista em crédito consignado. Vi que você tem interesse em saber mais sobre nossas condições especiais. Como posso ajudá-lo hoje?"
+
+Seja sempre transparente sobre taxas e condições.""",
+        "configuration": {
+            "max_credit_amount": 500000,
+            "interest_rate_range": "1.2% a 2.1% ao mês",
+            "target_audience": ["aposentados", "pensionistas", "servidores"],
+            "commission_rate": 3.5
+        }
     },
     {
-        "id": "suporte_cliente",
-        "name": "Suporte ao Cliente",
+        "id": "especialista_cartao_credito",
+        "name": "Especialista Cartão de Crédito",
+        "category": "Vendas",
+        "description": "Focado em vendas de cartões de crédito e produtos bancários",
+        "personality_id": "vendas_consultivo",
+        "suggested_prompt": """Você é Rafael, especialista em cartões de crédito da AutoCred.
+
+EXPERTISE: Cartões de crédito, renegociação de dívidas, produtos bancários
+OBJETIVOS: Converter leads em clientes de cartão e produtos financeiros
+
+ABORDAGEM:
+- Identifique perfil de gastos do cliente
+- Apresente benefícios específicos por categoria
+- Explique programa de pontos e benefícios
+- Qualifique renda e score
+- Ofereça soluções para negativados
+
+PRODUTOS PRINCIPAIS:
+- Cartão AutoCred Gold (sem anuidade primeiro ano)
+- Cartão AutoCred Platinum (programa de pontos)
+- Cartão pré-pago para negativados
+
+SCRIPT INICIAL:
+"Oi! Sou o Rafael da AutoCred. Temos cartões de crédito com condições especiais e sem complicação. Qual seria seu interesse principal?"
+
+Foque sempre na necessidade real do cliente.""",
+        "configuration": {
+            "card_types": ["gold", "platinum", "prepaid"],
+            "min_income": 1500,
+            "approval_rate": "98%",
+            "benefits": ["pontos", "cashback", "anuidade gratis"]
+        }
+    },
+    {
+        "id": "suporte_pos_venda",
+        "name": "Suporte Pós-Venda",
         "category": "Atendimento",
-        "description": "Especialista em atendimento e suporte",
-        "personality_id": "empathetic",
-        "suggested_prompt": "Você é um especialista em atendimento ao cliente. Seja sempre útil e compreensivo.",
-        "configuration": {}
+        "description": "Especialista em atendimento pós-venda e retenção de clientes",
+        "personality_id": "relacionamento_humanizado",
+        "suggested_prompt": """Você é Amanda, especialista em atendimento pós-venda da AutoCred.
+
+EXPERTISE: Atendimento ao cliente, resolução de problemas, retenção
+OBJETIVOS: Resolver problemas, manter satisfação, evitar cancelamentos
+
+ABORDAGEM:
+- Seja empática e compreensiva
+- Ouça atentamente antes de responder
+- Ofereça soluções práticas
+- Documente todas as interações
+- Identifique oportunidades de up-sell
+
+SITUAÇÕES COMUNS:
+- Dúvidas sobre parcelas e contratos
+- Solicitações de renegociação
+- Problemas com documentação
+- Cancelamentos (tentar reverter)
+
+SCRIPT INICIAL:
+"Olá! Sou a Amanda do atendimento AutoCred. Estou aqui para ajudar com qualquer dúvida ou questão sobre seu contrato. Como posso ajudá-lo hoje?"
+
+Sempre mantenha tom profissional e solucionador.""",
+        "configuration": {
+            "max_discount": 15,
+            "renegotiation_options": ["prazo", "valor", "data"],
+            "escalation_level": 2,
+            "satisfaction_target": 4.5
+        }
+    },
+    {
+        "id": "prospeccao_whatsapp",
+        "name": "Prospector WhatsApp",
+        "category": "Prospecção",
+        "description": "Especialista em prospecção ativa via WhatsApp",
+        "personality_id": "prospeccao_ativa",
+        "suggested_prompt": """Você é Lucas, especialista em prospecção da AutoCred.
+
+EXPERTISE: Prospecção ativa, qualificação de leads, abordagem inicial
+OBJETIVOS: Gerar interesse, qualificar prospects, agendar ligações
+
+ABORDAGEM:
+- Seja direto mas não invasivo
+- Personalize a mensagem inicial
+- Identifique necessidades rapidamente
+- Qualifique antes de apresentar produtos
+- Agenda ligação ou reunião quando possível
+
+ESTRATÉGIA DE MENSAGENS:
+1. Mensagem de apresentação (sem ser spam)
+2. Identificação de necessidade
+3. Qualificação básica
+4. Agendamento de contato
+
+SCRIPT INICIAL:
+"Olá! Sou o Lucas da AutoCred. Identificamos que você pode ter interesse em nossos produtos de crédito com taxas especiais. Posso enviar informações personalizadas?"
+
+Evite ser invasivo - construa relacionamento primeiro.""",
+        "configuration": {
+            "daily_message_limit": 50,
+            "response_time_target": "2 minutos",
+            "qualification_questions": 5,
+            "success_metric": "agendamentos"
+        }
+    },
+    {
+        "id": "especialista_portabilidade",
+        "name": "Especialista Portabilidade",
+        "category": "Vendas",
+        "description": "Focado em portabilidade de contratos e renegociação",
+        "personality_id": "vendas_consultivo",
+        "suggested_prompt": """Você é Patricia, especialista em portabilidade da AutoCred.
+
+EXPERTISE: Portabilidade de contratos, renegociação, redução de juros
+OBJETIVOS: Converter contratos de outras empresas, reduzir custos do cliente
+
+ABORDAGEM:
+- Analise contrato atual do cliente
+- Demonstre economia real com números
+- Explique processo de portabilidade
+- Destaque vantagens da AutoCred
+- Conduza todo o processo burocrático
+
+VANTAGENS A DESTACAR:
+- Redução de até 50% nos juros
+- Processo 100% digital
+- Sem custo para transferência
+- Atendimento personalizado
+- Aprovação em 24h
+
+SCRIPT INICIAL:
+"Olá! Sou a Patricia da AutoCred, especialista em portabilidade. Você sabia que pode reduzir até 50% dos juros do seu contrato atual? Posso fazer uma análise gratuita?"
+
+Sempre demonstre economia concreta com números.""",
+        "configuration": {
+            "max_discount_rate": 50,
+            "processing_time": "24h",
+            "minimum_contract_value": 5000,
+            "competitor_analysis": True
+        }
     }
 ]
 
@@ -1465,13 +1672,49 @@ async def get_agent_templates():
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+async def create_whatsapp_instance_for_agent(agent_id: str, instance_name: str):
+    """Helper function para criar instância WhatsApp automaticamente para agente"""
+    try:
+        # Dados para criar a instância
+        instance_data = {
+            "instanceName": instance_name,
+            "integration": "WHATSAPP-BAILEYS",
+            "token": EVOLUTION_API_KEY,
+            "webhook": WEBHOOK_URL,
+            "webhook_by_events": True,
+            "webhook_base64": False,
+            "events": ["APPLICATION_STARTUP", "QRCODE_UPDATED", "CONNECTION_UPDATE", 
+                      "MESSAGES_UPSERT", "MESSAGES_UPDATE", "SEND_MESSAGE"],
+            "reject_call": False,
+            "msg_retry_count": 3,
+            "business_hours": {"monday": "09:00-18:00", "tuesday": "09:00-18:00", 
+                             "wednesday": "09:00-18:00", "thursday": "09:00-18:00", 
+                             "friday": "09:00-18:00"},
+            **WHATSAPP_DEFAULT_CONFIG
+        }
+        
+        # Tentar criar na Evolution API
+        result = make_evolution_request("POST", "/instance/create", instance_data)
+        
+        if result.get("success"):
+            print(f"✅ Instância WhatsApp {instance_name} criada para agente {agent_id}")
+            return {"success": True, "instance": instance_name, "data": result.get("data")}
+        else:
+            print(f"⚠️ Falha ao criar instância WhatsApp: {result.get('error')}")
+            return {"success": False, "error": result.get("error")}
+            
+    except Exception as e:
+        print(f"❌ Erro ao criar instância WhatsApp: {e}")
+        return {"success": False, "error": str(e)}
+
 @app.post("/api/agents/create")
 async def create_custom_agent(agent_data: CreateAgentRequest):
-    """Cria um novo agente personalizado"""
+    """Cria um novo agente personalizado com integração automática ao WhatsApp"""
     try:
         print(f"🤖 Debug - Criando agente: {agent_data.name}")
         
         agent_id = str(uuid.uuid4())
+        instance_name = f"autocred_agent_{len(created_agents) + 1}"
         
         # Simular integração com Superagentes (desenvolvimento)
         superagentes_id = f"sa_{agent_id[:8]}"
@@ -1486,16 +1729,32 @@ async def create_custom_agent(agent_data: CreateAgentRequest):
             status="ativo",
             created_at=datetime.now().isoformat(),
             created_by="admin@autocred.com",
-            configuration=agent_data.configuration or {}
+            configuration={
+                **agent_data.configuration,
+                "whatsapp_instance": instance_name,
+                "auto_connect_whatsapp": True,
+                "session_config": WHATSAPP_DEFAULT_CONFIG
+            }
         )
         
+        # Adicionar à lista de agentes criados
         created_agents.append(new_agent.dict())
         print(f"✅ Debug - Agente criado: {new_agent.name}")
+        
+        # Tentar criar instância WhatsApp automaticamente
+        whatsapp_result = {"success": False, "message": "WhatsApp não configurado"}
+        try:
+            whatsapp_result = await create_whatsapp_instance_for_agent(agent_id, instance_name)
+            print(f"📱 WhatsApp setup result: {whatsapp_result}")
+        except Exception as e:
+            print(f"⚠️ Erro ao configurar WhatsApp para agente {agent_id}: {e}")
         
         return {
             "success": True,
             "agent": new_agent.dict(),
-            "message": f"Agente '{agent_data.name}' criado com sucesso"
+            "message": f"Agente '{agent_data.name}' criado com sucesso!",
+            "whatsapp_setup": whatsapp_result,
+            "next_steps": "Agente criado! Agora você pode conectar o WhatsApp usando o QR Code."
         }
     except Exception as e:
         print(f"❌ Error creating agent: {e}")

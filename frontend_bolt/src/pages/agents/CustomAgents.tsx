@@ -27,7 +27,7 @@ import {
   Phone,
   Filter
 } from 'lucide-react';
-import { AgentsService } from '../../services/agents.service';
+import { agentsService } from '../../services/agents.service';
 import { WhatsAppQRCode } from '../../components/WhatsAppQRCode';
 
 interface AgentPersonality {
@@ -781,10 +781,18 @@ const CustomAgents: React.FC = () => {
 
               {/* Usar o componente WhatsAppQRCode atualizado */}
               <WhatsAppQRCode 
+                agentId={selectedAgent.id}
+                agentName={selectedAgent.name}
+                instanceName={selectedAgent.configuration?.whatsapp_instance}
                 onConnected={() => {
+                  console.log('🎉 Agente conectado ao WhatsApp:', selectedAgent.name);
                   setWhatsappStatus(prev => ({ ...prev, [selectedAgent.id]: 'connected' }));
                   setShowWhatsAppModal(false);
                   setQrCodeUrl('');
+                }}
+                onError={(error: string) => {
+                  console.error('❌ Erro na conexão WhatsApp:', error);
+                  setWhatsappStatus(prev => ({ ...prev, [selectedAgent.id]: 'disconnected' }));
                 }}
               />
             </div>
