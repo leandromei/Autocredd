@@ -1,0 +1,40 @@
+# Git
+.git
+.gitignore
+
+# Node modules (frontend has its own)
+frontend_bolt/node_modules
+frontend_bolt/.vite
+autocred-fresh/node_modules
+
+# Python cache
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.Python
+.pytest_cache
+
+# Development
+.env
+.vscode
+*.log
+
+# MongoDB data
+mongodb/
+
+# Evolution API
+evolution-api/
+evolution-api-latest/
+
+# Testing files
+test_*.py
+debug_*.py
+
+# Documentation
+*.md
+
+# Build artifacts
+frontend_bolt/dist
+build/
+dist/ 
