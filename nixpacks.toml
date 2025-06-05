@@ -1,25 +1,12 @@
 [variables]
 PORT = "8000"
 NIXPACKS_PYTHON_VERSION = "3.11"
-NODE_VERSION = "18"
 
 [phases.setup]
-nixPkgs = ["python311", "nodejs-18_x", "npm"]
+nixPkgs = ["python311"]
 
 [phases.install]
-cmds = [
-  "echo '📦 Installing Python dependencies...'",
-  "pip install -r requirements.txt",
-  "echo '📦 Installing Node.js dependencies...'",
-  "cd frontend_bolt && npm ci",
-  "echo '✅ All dependencies installed!'"
-]
-
-[phases.build]
-cmds = [
-  "chmod +x build_frontend.sh",
-  "./build_frontend.sh"
-]
+cmds = ["pip install -r requirements.txt"]
 
 [start]
 cmd = "python main.py" 
