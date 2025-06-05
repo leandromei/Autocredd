@@ -2,5 +2,5 @@
 builder = "dockerfile"
 
 [deploy]
-startCommand = "python main.py"
-healthcheckPath = "/api/health" 
+restartPolicyType = "on_failure"
+startCommand = "python main.py" 

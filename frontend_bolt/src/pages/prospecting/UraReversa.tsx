@@ -135,34 +135,34 @@ export default function UraReversa() {
 
       {/* Campaign Control */}
       <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
             <Phone className="h-5 w-5" />
             Controle de Campanha
-          </CardTitle>
+            </CardTitle>
           <CardDescription>
             Gerencie suas campanhas de discagem automática
           </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
+          </CardHeader>
+          <CardContent className="space-y-4">
           <div className="flex items-center gap-4">
-            <Button 
+              <Button 
               size="lg" 
               onClick={() => setIsPlaying(!isPlaying)}
               className={isPlaying ? 'bg-red-600 hover:bg-red-700' : 'bg-green-600 hover:bg-green-700'}
-            >
+              >
               {isPlaying ? (
-                <>
+                  <>
                   <Pause className="h-5 w-5 mr-2" />
                   Pausar Discagem
-                </>
-              ) : (
-                <>
+                  </>
+                ) : (
+                  <>
                   <Play className="h-5 w-5 mr-2" />
                   Iniciar Discagem
-                </>
-              )}
-            </Button>
+                  </>
+                )}
+              </Button>
             
             <div className="flex items-center gap-2">
               <span className="text-sm text-gray-600">Status:</span>
@@ -170,11 +170,11 @@ export default function UraReversa() {
                 {isPlaying ? 'Discando' : 'Parado'}
               </Badge>
             </div>
-            
+
             <Button variant="outline" size="sm">
               <Settings className="h-4 w-4 mr-2" />
               Configurações
-            </Button>
+              </Button>
           </div>
 
           {isPlaying && (
@@ -188,18 +188,18 @@ export default function UraReversa() {
               </div>
             </div>
           )}
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
 
       {/* Campaigns List */}
       <Card>
-        <CardHeader>
+          <CardHeader>
           <CardTitle>Campanhas Ativas</CardTitle>
           <CardDescription>
             {campaigns.length} campanhas configuradas
           </CardDescription>
-        </CardHeader>
-        <CardContent>
+          </CardHeader>
+          <CardContent>
           <div className="space-y-4">
             {campaigns.map((campaign) => (
               <div key={campaign.id} className="border rounded-lg p-4">
@@ -241,7 +241,7 @@ export default function UraReversa() {
                     <p className="text-sm text-gray-600">Progresso</p>
                     <p className="font-semibold">{campaign.progress}%</p>
                   </div>
-                </div>
+            </div>
 
                 <div className="w-full bg-gray-200 rounded-full h-2">
                   <div 
@@ -251,9 +251,9 @@ export default function UraReversa() {
                 </div>
               </div>
             ))}
-          </div>
-        </CardContent>
-      </Card>
+            </div>
+          </CardContent>
+        </Card>
 
       {/* Configuration Panel */}
       <Card>

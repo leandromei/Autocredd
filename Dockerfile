@@ -17,7 +17,6 @@ COPY . .
 EXPOSE 8000
 
 # Set environment variables
-ENV PORT=8000
 ENV PYTHONUNBUFFERED=1
 
 # Start command
