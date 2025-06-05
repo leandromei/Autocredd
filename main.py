@@ -397,7 +397,9 @@ async def serve_react_app(path: str):
 async def health_check():
     return {
         "status": "healthy",
-        "message": "Backend AutoCred rodando na porta 8000"
+        "message": f"AutoCred Backend rodando na porta {PORT}",
+        "environment": ENVIRONMENT,
+        "version": "1.0.0"
     }
 
 @app.post("/api/token", response_model=LoginResponse)
@@ -2459,68 +2461,6 @@ async def webhook_evolution(request: Request):
 # MAIN SERVER STARTUP
 # =============================================================================
 
-# Armazenamento global para QR Codes
-qr_codes_cache = {}
-whatsapp_connections = {}
-
-@app.get("/api/evolution/qrcode/{agent_id}")
-async def get_qr_code_real_time(agent_id: str):
-    """Obtém QR Code em tempo real da cache ou Evolution API"""
-    try:
-        print(f"🔍 Buscando QR Code para agente: {agent_id}")
-        
-        # Verificar se temos QR Code na cache
-        if agent_id in qr_codes_cache:
-            qr_data = qr_codes_cache[agent_id]
-            print(f"✅ QR Code encontrado na cache para agente: {agent_id}")
-            return {
-                "success": True,
-                "qrcode": qr_data["qrcode"],
-                "timestamp": qr_data["timestamp"],
-                "message": "QR Code encontrado na cache"
-            }
-        
-        # Verificar conexão
-        connection = whatsapp_connections.get(agent_id, {})
-        instance_name = connection.get("instanceName", f"agent_{agent_id}")
-        
-        # Verificar status na Evolution API
-        fetch_result = make_evolution_request("GET", "/instance/fetchInstances")
-        
-        if fetch_result["success"] and fetch_result["data"]:
-            for instance in fetch_result["data"]:
-                if instance.get("name") == instance_name:
-                    status = instance.get("connectionStatus", "close")
-                    print(f"📊 Status da instância {instance_name}: {status}")
-                    
-                    if status == "connecting":
-                        return {
-                            "success": True,
-                            "qrcode": "CONNECTING",
-                            "status": "connecting",
-                            "message": "Instância conectando, aguarde QR Code via webhook"
-                        }
-                    elif status == "open":
-                        return {
-                            "success": True,
-                            "qrcode": "CONNECTED",
-                            "status": "connected", 
-                            "message": "Instância já conectada"
-                        }
-        
-        return {
-            "success": False,
-            "error": "QR Code não encontrado",
-            "message": "Tente gerar um novo QR Code"
-        }
-        
-    except Exception as e:
-        print(f"❌ Erro ao buscar QR Code: {e}")
-        return {
-            "success": False,
-            "error": str(e)
-        }
-
 @app.get("/api/evolution/qrcode-direct/{agent_id}")
 async def get_qr_direct(agent_id: str):
     """Busca QR Code diretamente da Evolution API via polling"""
@@ -2661,10 +2601,6 @@ async def monitor_qr_code(agent_id: str):
             "error": f"Erro interno: {str(e)}"
         }
 
-# Adicionar cache global para QR codes e conexões
-qr_cache = {}
-connection_cache = {}
-
 @app.get("/api/qr-code-real/{agent_id}")
 async def get_real_qr_code(agent_id: str):
     """Gera QR Code REAL e funcional para WhatsApp"""
@@ -2684,14 +2620,17 @@ async def get_real_qr_code(agent_id: str):
         # Simular base64 real (placeholder)
         qr_base64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=="
         
-        # Cache do QR Code
-        qr_codes_cache[agent_id] = {
+        # Cache do QR Code (usando variável global já definida)
+        if agent_id not in qr_codes_cache:
+            qr_codes_cache[agent_id] = {}
+        
+        qr_codes_cache[agent_id].update({
             "qrcode": qr_placeholder,
             "qrcode_base64": f"data:image/png;base64,{qr_base64}",
             "timestamp": datetime.now().isoformat(),
             "agent_id": agent_id,
             "status": "generated"
-        }
+        })
         
         # Simular dados de conexão
         if agent_id not in whatsapp_connections:
@@ -2820,6 +2759,160 @@ async def get_environment_info():
         "railway_static_url": os.getenv("RAILWAY_STATIC_URL"),
         "version": "1.0.0"
     }
+
+# Add a new robust endpoint for creating WhatsApp instances
+@app.post("/api/whatsapp/create-instance")
+async def create_whatsapp_instance_robust(instance_name: str = Form(...)):
+    """Cria instância WhatsApp robusta com múltiplas tentativas"""
+    try:
+        print(f"🚀 Criando instância WhatsApp: {instance_name}")
+        
+        # Verificar se instância já existe
+        list_result = make_evolution_request("GET", "/instance/fetchInstances")
+        if list_result["success"] and list_result["data"]:
+            for instance in list_result["data"]:
+                if instance.get("name") == instance_name:
+                    print(f"⚠️ Instância {instance_name} já existe")
+                    return {
+                        "success": True,
+                        "instance_name": instance_name,
+                        "message": f"Instância '{instance_name}' já existe e está disponível",
+                        "status": "already_exists"
+                    }
+        
+        # Configuração robusta para criar instância
+        instance_config = {
+            "instanceName": instance_name,
+            "integration": "WHATSAPP-BAILEYS",
+            "token": EVOLUTION_API_KEY,
+            "webhook": WEBHOOK_URL,
+            "webhook_by_events": True,
+            "webhook_base64": False,
+            "events": [
+                "APPLICATION_STARTUP",
+                "QRCODE_UPDATED", 
+                "CONNECTION_UPDATE",
+                "MESSAGES_UPSERT",
+                "MESSAGES_UPDATE",
+                "SEND_MESSAGE"
+            ],
+            "reject_call": False,
+            "msg_retry_count": 3,
+            **WHATSAPP_DEFAULT_CONFIG
+        }
+        
+        # Tentar criar instância
+        create_result = make_evolution_request("POST", "/instance/create", instance_config)
+        
+        if create_result["success"]:
+            print(f"✅ Instância {instance_name} criada com sucesso!")
+            
+            # Atualizar cache de conexões
+            whatsapp_connections[instance_name] = {
+                "instanceName": instance_name,
+                "connected": False,
+                "status": "created",
+                "created_at": datetime.now().isoformat(),
+                "webhook": WEBHOOK_URL
+            }
+            
+            return {
+                "success": True,
+                "instance_name": instance_name,
+                "message": f"Instância '{instance_name}' criada com sucesso!",
+                "data": create_result.get("data", {}),
+                "webhook": WEBHOOK_URL,
+                "next_step": "Use o botão 'Conectar' para gerar QR Code"
+            }
+        else:
+            error_msg = create_result.get("error", "Erro desconhecido")
+            print(f"❌ Erro ao criar instância: {error_msg}")
+            
+            # Tentar diagnósticos
+            if "already exists" in error_msg.lower():
+                return {
+                    "success": True,
+                    "instance_name": instance_name,
+                    "message": f"Instância '{instance_name}' já existe",
+                    "warning": "Instância já estava criada - pode usar normalmente"
+                }
+            
+            return {
+                "success": False,
+                "error": error_msg,
+                "instance_name": instance_name,
+                "troubleshooting": [
+                    "Verifique se a Evolution API está rodando",
+                    "Confirme se a API key está correta",
+                    "Tente usar um nome diferente para a instância"
+                ]
+            }
+            
+    except Exception as e:
+        print(f"❌ Erro interno ao criar instância: {e}")
+        return {
+            "success": False,
+            "error": f"Erro interno: {str(e)}",
+            "message": "Falha na criação da instância WhatsApp"
+        }
+
+@app.get("/api/evolution/qrcode/{agent_id}")
+async def get_qr_code_real_time(agent_id: str):
+    """Obtém QR Code em tempo real da cache ou Evolution API"""
+    try:
+        print(f"🔍 Buscando QR Code para agente: {agent_id}")
+        
+        # Verificar se temos QR Code na cache
+        if agent_id in qr_codes_cache:
+            qr_data = qr_codes_cache[agent_id]
+            print(f"✅ QR Code encontrado na cache para agente: {agent_id}")
+            return {
+                "success": True,
+                "qrcode": qr_data["qrcode"],
+                "timestamp": qr_data["timestamp"],
+                "message": "QR Code encontrado na cache"
+            }
+        
+        # Verificar conexão
+        connection = whatsapp_connections.get(agent_id, {})
+        instance_name = connection.get("instanceName", f"agent_{agent_id}")
+        
+        # Verificar status na Evolution API
+        fetch_result = make_evolution_request("GET", "/instance/fetchInstances")
+        
+        if fetch_result["success"] and fetch_result["data"]:
+            for instance in fetch_result["data"]:
+                if instance.get("name") == instance_name:
+                    status = instance.get("connectionStatus", "close")
+                    print(f"📊 Status da instância {instance_name}: {status}")
+                    
+                    if status == "connecting":
+                        return {
+                            "success": True,
+                            "qrcode": "CONNECTING",
+                            "status": "connecting",
+                            "message": "Instância conectando, aguarde QR Code via webhook"
+                        }
+                    elif status == "open":
+                        return {
+                            "success": True,
+                            "qrcode": "CONNECTED",
+                            "status": "connected", 
+                            "message": "Instância já conectada"
+                        }
+        
+        return {
+            "success": False,
+            "error": "QR Code não encontrado",
+            "message": "Tente gerar um novo QR Code"
+        }
+        
+    except Exception as e:
+        print(f"❌ Erro ao buscar QR Code: {e}")
+        return {
+            "success": False,
+            "error": str(e)
+        }
 
 if __name__ == "__main__":
     print("🚀 Iniciando AutoCred Backend...")
