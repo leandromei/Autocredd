@@ -77,13 +77,12 @@ export class WhatsAppService {
 
   private async request(method: string, endpoint: string, data?: any) {
     try {
-      console.log(`🔗 Making ${method} request to: /evolution${endpoint}`);
+      console.log(`🔗 Making ${method} request to: /api/evolution${endpoint}`);
       
       const config = {
         method,
-        url: `/evolution${endpoint}`,
+        url: `/api/evolution${endpoint}`,
         headers: {
-          'apikey': API_KEY,
           'Content-Type': 'application/json'
         },
         timeout: 15000,
@@ -99,82 +98,12 @@ export class WhatsAppService {
     }
   }
 
-  async getQRCode(instanceName?: string) {
-    try {
-      const targetInstance = instanceName || REAL_INSTANCE_NAME;
-      console.log(`🔍 Getting QR Code for instance: ${targetInstance}`);
-      
-      // Verificar se a instância existe
-      const instances = await this.getAllInstances();
-      const instanceExists = instances.find((inst: any) => inst.name === targetInstance);
-      
-      if (!instanceExists) {
-        console.log(`⚠️ Instance ${targetInstance} not found, creating new one...`);
-        
-        // Criar nova instância com QR code
-        const createData = {
-          instanceName: targetInstance,
-          qrcode: true,
-          integration: 'WHATSAPP-BAILEYS',
-          webhook_by_events: false
-        };
-        
-        const createResponse = await this.request('POST', '/instance/create', createData);
-        console.log('✅ Instance created with QR code:', createResponse);
-        
-        if (createResponse.qrcode?.code) {
-          return {
-            qrCode: createResponse.qrcode.code,
-            status: 'qr_ready',
-            instance: targetInstance
-          };
-        }
-      }
-      
-      console.log('📊 Instance found:', instanceExists);
-      
-      // Se a instância já está conectada, não precisa de QR code
-      if (instanceExists.connectionStatus === 'open') {
-        throw new Error(`Instância ${targetInstance} já está conectada ao WhatsApp.`);
-      }
-      
-      // Tentar conectar para gerar QR code
-      console.log('📱 Connecting to generate QR Code...');
-      const connectResponse = await this.request('GET', `/instance/connect/${targetInstance}`);
-      console.log('📱 Connect response:', connectResponse);
-      
-      // Verificar se retornou QR code
-      if (connectResponse.qrcode?.code) {
-        console.log('✅ QR Code found in connect response!');
-        return {
-          qrCode: connectResponse.qrcode.code,
-          status: 'qr_ready',
-          instance: targetInstance
-        };
-      }
-      
-      if (connectResponse.code) {
-        console.log('✅ QR Code found in code field!');
-        return {
-          qrCode: connectResponse.code,
-          status: 'qr_ready',
-          instance: targetInstance
-        };
-      }
-      
-      // Se não conseguiu obter QR code
-      throw new Error(`Não foi possível obter QR Code da instância ${targetInstance}.`);
-      
-    } catch (error: any) {
-      console.error('❌ Error getting QR Code:', error);
-      throw error;
-    }
-  }
+
 
   async getInstanceStatus(instanceName?: string) {
     try {
       const targetInstance = instanceName || REAL_INSTANCE_NAME;
-      const response = await this.request('GET', `/instance/connectionState/${targetInstance}`);
+      const response = await this.request('GET', `/instance/status/${targetInstance}`);
       return {
         status: response.state || response.status || 'disconnected',
         instance: targetInstance
@@ -186,11 +115,15 @@ export class WhatsAppService {
 
   async getAllInstances() {
     try {
-      const response = await this.request('GET', '/instance/fetchInstances');
+      const response = await this.request('GET', '/instance/list');
       return response || [];
     } catch (error) {
       return [];
     }
+  }
+
+  async listInstances() {
+    return this.getAllInstances();
   }
 
   async createInstance(instanceName: string) {
@@ -205,6 +138,18 @@ export class WhatsAppService {
       return await this.request('POST', '/instance/create', data);
     } catch (error: any) {
       throw new Error(error.response?.data?.message || 'Erro ao criar instância');
+    }
+  }
+
+  async getQRCode(instanceName: string) {
+    try {
+      const response = await this.request('GET', `/qrcode/${instanceName}`);
+      return {
+        qrcode: response.qrcode || response.base64,
+        status: response.status || 'qr_ready'
+      };
+    } catch (error: any) {
+      throw new Error(error.response?.data?.message || 'Erro ao obter QR Code');
     }
   }
 
