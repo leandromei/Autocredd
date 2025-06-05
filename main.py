@@ -321,10 +321,29 @@ def authenticate_user(email: str, password: str) -> Dict[str, Any] | None:
 
 @app.get("/")
 async def root():
-    """Serve o frontend React ou retorna API info"""
+    """Serve o frontend React"""
     if os.path.exists("static/index.html"):
         return FileResponse("static/index.html")
-    return {"message": "AutoCred API está funcionando!", "status": "online", "environment": ENVIRONMENT}
+    return {"message": "AutoCred API está funcionando!", "status": "online", "environment": ENVIRONMENT, "note": "Frontend React sendo construído..."}
+
+# Adicionar catch-all route para React Router
+@app.get("/{path:path}")
+async def serve_react_app(path: str):
+    """Serve frontend React para todas as rotas não-API"""
+    # Se for rota da API, deixar o FastAPI tratar
+    if path.startswith("api/") or path.startswith("docs") or path.startswith("webhook/"):
+        raise HTTPException(status_code=404, detail="API endpoint not found")
+    
+    # Verificar se é arquivo estático
+    file_path = f"static/{path}"
+    if os.path.exists(file_path) and os.path.isfile(file_path):
+        return FileResponse(file_path)
+    
+    # Para todas as outras rotas, servir o index.html (React Router)
+    if os.path.exists("static/index.html"):
+        return FileResponse("static/index.html")
+    
+    return {"message": "Frontend React não encontrado", "path": path}
 
 @app.get("/api/health")
 async def health_check():

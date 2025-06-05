@@ -7,16 +7,25 @@ nixPkgs = ["python311", "nodejs-18_x", "npm"]
 
 [phases.install]
 cmds = [
+  "echo '📦 Instalando dependências Python...'",
   "pip install -r requirements.txt",
-  "cd frontend_bolt && npm install"
+  "echo '📦 Instalando dependências Node.js...'",
+  "cd frontend_bolt && npm install",
+  "echo '✅ Dependências instaladas!'"
 ]
 
 [phases.build]
 cmds = [
+  "echo '🎨 Instalando dependências do frontend...'",
+  "cd frontend_bolt && npm ci --only=production",
+  "echo '🔨 Buildando frontend React...'",
   "cd frontend_bolt && npm run build",
+  "echo '📁 Criando diretório static...'",
   "mkdir -p static",
-  "cp -r frontend_bolt/dist/* static/ || echo 'Frontend build failed, creating fallback'",
-  "ls -la static/ || echo 'Static directory not found'"
+  "echo '📋 Copiando arquivos buildados...'",
+  "cp -r frontend_bolt/dist/* static/",
+  "echo '✅ Build concluído!'",
+  "ls -la static/"
 ]
 
 [start]
