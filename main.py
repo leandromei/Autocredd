@@ -1354,6 +1354,33 @@ async def create_evolution_instance(instance_data: InstanceCreate):
     try:
         print(f"🔄 Criando instância Evolution: {instance_data.instanceName}")
         
+        # Verificar se estamos no ambiente de desenvolvimento/Railway sem Evolution API
+        if ENVIRONMENT in ['railway', 'development']:
+            print("🔧 Modo simulado - Evolution API não disponível")
+            
+            # Criar instância simulada para desenvolvimento
+            simulated_instance = {
+                "instanceName": instance_data.instanceName,
+                "status": "created",
+                "connectionStatus": "close",
+                "ownerJid": None,
+                "profileName": "AutoCred Instance",
+                "profilePictureUrl": None,
+                "webhook": instance_data.webhook or WEBHOOK_URL,
+                "webhookByEvents": instance_data.webhook_by_events or False,
+                "events": instance_data.events or ["APPLICATION_STARTUP", "QRCODE_UPDATED", "MESSAGES_UPSERT", "CONNECTION_UPDATE"],
+                "created_at": datetime.now().isoformat(),
+                "simulated": True
+            }
+            
+            return {
+                "success": True,
+                "instance": simulated_instance,
+                "message": "Instância criada com sucesso (modo simulado)",
+                "warning": "Esta é uma instância simulada para desenvolvimento"
+            }
+        
+        # Para produção com Evolution API real
         data = {
             "instanceName": instance_data.instanceName,
             "webhook": instance_data.webhook,
@@ -1473,6 +1500,18 @@ async def list_evolution_instances():
     try:
         print("📋 Listando instâncias Evolution")
         
+        # Verificar se estamos no ambiente de desenvolvimento/Railway sem Evolution API
+        if ENVIRONMENT in ['railway', 'development']:
+            print("🔧 Modo simulado - Retornando lista vazia")
+            return {
+                "success": True,
+                "instances": [],
+                "total": 0,
+                "message": "Modo simulado - Lista vazia",
+                "warning": "Evolution API não disponível no ambiente atual"
+            }
+        
+        # Para produção com Evolution API real
         result = make_evolution_request("GET", "/instance/fetchInstances")
         
         if result["success"]:
