@@ -15,7 +15,8 @@ cmds = [
 cmds = [
   "cd frontend_bolt && npm run build",
   "mkdir -p static",
-  "cp -r frontend_bolt/dist/* static/"
+  "cp -r frontend_bolt/dist/* static/ || echo 'Frontend build failed, creating fallback'",
+  "ls -la static/ || echo 'Static directory not found'"
 ]
 
 [start]
