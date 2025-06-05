@@ -1,6 +1,6 @@
-import { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { PageHeader } from '@/components/common/PageHeader';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -27,7 +27,8 @@ import {
   DollarSign,
   Activity,
   RefreshCw,
-  Plus
+  Plus,
+  MessageCircle
 } from 'lucide-react';
 
 // Interfaces
@@ -239,6 +240,14 @@ export default function SMS() {
         return 'bg-blue-100 text-blue-800 border-blue-200';
       case 'failed':
         return 'bg-red-100 text-red-800 border-red-200';
+      case 'enviando':
+        return 'bg-blue-100 text-blue-800';
+      case 'agendado':
+        return 'bg-yellow-100 text-yellow-800';
+      case 'concluido':
+        return 'bg-green-100 text-green-800';
+      case 'pausado':
+        return 'bg-gray-100 text-gray-800';
       default:
         return 'bg-gray-100 text-gray-800 border-gray-200';
     }
@@ -264,6 +273,36 @@ export default function SMS() {
     if (phone && name) {
       setContacts([...contacts, { name, phone }]);
     }
+  };
+
+  const templates = [
+    {
+      id: 1,
+      name: 'Consignado',
+      message: 'Oi! Você tem interesse em crédito consignado com as melhores taxas? Responda SIM para mais informações. AutoCred',
+      category: 'credito'
+    },
+    {
+      id: 2,
+      name: 'Cartão de Crédito',
+      message: 'Cartão de crédito sem anuidade com limite pré-aprovado! Clique aqui: [LINK]. AutoCred',
+      category: 'cartao'
+    },
+    {
+      id: 3,
+      name: 'Refinanciamento',
+      message: 'Quite suas dívidas com nosso refinanciamento! Taxa a partir de 1,2% am. Saiba mais: [LINK]. AutoCred',
+      category: 'refinanciamento'
+    }
+  ];
+
+  const handleSendSMS = async () => {
+    setLoading(true);
+    // Simulate API call
+    setTimeout(() => {
+      setLoading(false);
+      setMessage('');
+    }, 2000);
   };
 
   return (
@@ -600,6 +639,102 @@ export default function SMS() {
           </Card>
         </div>
       )}
+
+      {/* Templates */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <MessageSquare className="h-5 w-5" />
+            Templates
+          </CardTitle>
+          <CardDescription>
+            Modelos pré-definidos para suas campanhas
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-3">
+            {templates.map((template) => (
+              <div key={template.id} className="border rounded-lg p-3">
+                <div className="flex items-center justify-between mb-2">
+                  <h3 className="font-medium text-gray-900">{template.name}</h3>
+                  <Badge variant="outline" className="text-xs">
+                    {template.category}
+                  </Badge>
+                </div>
+                <p className="text-sm text-gray-600 mb-3">{template.message}</p>
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => setMessage(template.message)}
+                >
+                  Usar Template
+                </Button>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Quick Send */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Send className="h-5 w-5" />
+            Envio Rápido
+          </CardTitle>
+          <CardDescription>
+            Envie SMS para uma lista específica de contatos
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div>
+            <label className="text-sm font-medium text-gray-700 mb-2 block">
+              Números de telefone (separados por vírgula)
+            </label>
+            <Textarea 
+              placeholder="11999999999, 11888888888, 11777777777..."
+              rows={3}
+            />
+          </div>
+
+          <div>
+            <label className="text-sm font-medium text-gray-700 mb-2 block">
+              Mensagem ({message.length}/160 caracteres)
+            </label>
+            <Textarea 
+              value={message}
+              onChange={(e) => setMessage(e.target.value)}
+              placeholder="Digite sua mensagem aqui..."
+              rows={4}
+              maxLength={160}
+            />
+          </div>
+
+          <div className="flex gap-2">
+            <Button 
+              onClick={handleSendSMS}
+              disabled={loading || !message.trim()}
+              className="flex-1"
+            >
+              {loading ? (
+                <>
+                  <Clock className="h-4 w-4 mr-2 animate-spin" />
+                  Enviando...
+                </>
+              ) : (
+                <>
+                  <Send className="h-4 w-4 mr-2" />
+                  Enviar SMS
+                </>
+              )}
+            </Button>
+            <Button variant="outline">
+              <Upload className="h-4 w-4 mr-2" />
+              Arquivo
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 } 

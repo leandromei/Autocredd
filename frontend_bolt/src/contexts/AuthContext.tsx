@@ -1,52 +1,76 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { LoginCredentials, useLogin } from '@/lib/api';
+import React, { createContext, useContext, useState } from 'react';
 
-interface AuthContextType {
-  isAuthenticated: boolean;
-  login: (credentials: LoginCredentials) => Promise<void>;
-  logout: () => void;
+export interface User {
+  id: string;
+  name: string;
+  email: string;
+  role: string;
+  avatar?: string;
 }
 
-const AuthContext = createContext<AuthContextType | null>(null);
+interface AuthContextType {
+  user: User | null;
+  isLoading: boolean;
+  login: (email: string, password: string) => Promise<void>;
+  logout: () => void;
+  isAuthenticated: boolean;
+}
+
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const useAuth = () => {
   const context = useContext(AuthContext);
-  if (!context) {
+  if (context === undefined) {
     throw new Error('useAuth must be used within an AuthProvider');
   }
   return context;
 };
 
-export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const navigate = useNavigate();
-  const loginMutation = useLogin();
+export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
+  const [user, setUser] = useState<User | null>(() => {
+    // Simulate a logged user for now
+    return {
+      id: '1',
+      name: 'João Silva',
+      email: 'joao@autocred.com',
+      role: 'admin',
+      avatar: 'https://ui-avatars.com/api/?name=João+Silva&background=3b82f6&color=fff'
+    };
+  });
+  const [isLoading, setIsLoading] = useState(false);
 
-  useEffect(() => {
-    const token = localStorage.getItem('token');
-    setIsAuthenticated(!!token);
-  }, []);
-
-  const login = async (credentials: LoginCredentials) => {
+  const login = async (email: string, password: string) => {
+    setIsLoading(true);
     try {
-      await loginMutation.mutateAsync(credentials);
-      setIsAuthenticated(true);
-      navigate('/');
+      // Simulate API call
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      setUser({
+        id: '1',
+        name: 'João Silva',
+        email,
+        role: 'admin',
+        avatar: `https://ui-avatars.com/api/?name=João+Silva&background=3b82f6&color=fff`
+      });
     } catch (error) {
-      console.error('Login failed:', error);
       throw error;
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const logout = () => {
-    localStorage.removeItem('token');
-    setIsAuthenticated(false);
-    navigate('/login');
+    setUser(null);
   };
 
   return (
-    <AuthContext.Provider value={{ isAuthenticated, login, logout }}>
+    <AuthContext.Provider value={{
+      user,
+      isLoading,
+      login,
+      logout,
+      isAuthenticated: !!user
+    }}>
       {children}
     </AuthContext.Provider>
   );

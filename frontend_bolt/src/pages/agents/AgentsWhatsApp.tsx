@@ -1,16 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { MessageSquare, Plus, Smartphone, Wifi, WifiOff, QrCode, Trash2, Send, RefreshCw, Settings, Users, Phone } from 'lucide-react';
-import { 
-  useListEvolutionInstances, 
-  useCreateEvolutionInstance, 
-  useConnectEvolutionInstance,
-  useDeleteEvolutionInstance,
-  useSendWhatsAppMessage,
-  useEvolutionInstanceStatus,
-  EvolutionInstance,
-  InstanceCreate,
-  MessageSend
-} from '../../lib/api';
+import { MessageSquare, Plus, Smartphone, Wifi, WifiOff, QrCode, Trash2, Send, RefreshCw, Settings, Users, Phone, X } from 'lucide-react';
+import { WhatsAppService, WhatsAppInstance } from '../../services/whatsapp.service';
 
 export default function AgentsWhatsApp() {
   const [selectedInstance, setSelectedInstance] = useState<string>('');
@@ -20,51 +10,94 @@ export default function AgentsWhatsApp() {
   const [newInstanceName, setNewInstanceName] = useState('');
   const [messageData, setMessageData] = useState({ phone: '', message: '' });
   const [showMessageForm, setShowMessageForm] = useState(false);
+  const [instances, setInstances] = useState<WhatsAppInstance[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  // API hooks
-  const { data: instancesData, refetch: refetchInstances, isLoading } = useListEvolutionInstances();
-  const createInstanceMutation = useCreateEvolutionInstance();
-  const connectInstanceMutation = useConnectEvolutionInstance();
-  const deleteInstanceMutation = useDeleteEvolutionInstance();
-  const sendMessageMutation = useSendWhatsAppMessage();
+  const whatsappService = WhatsAppService.getInstance();
 
-  const instances: EvolutionInstance[] = instancesData?.instances || [];
+  const fetchInstances = async () => {
+    try {
+      setIsLoading(true);
+      const instances = await whatsappService.listInstances();
+      setInstances(instances);
+    } catch (error) {
+      console.error('Error fetching instances:', error);
+      setError('Erro ao carregar instâncias');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchInstances();
+  }, []);
 
   const handleCreateInstance = async () => {
     if (!newInstanceName.trim()) return;
 
     try {
-      const instanceData: InstanceCreate = {
-        instanceName: newInstanceName,
-        webhook_by_events: true,
-        events: ['QRCODE_UPDATED', 'CONNECTION_UPDATE', 'MESSAGES_UPSERT']
-      };
-
-      await createInstanceMutation.mutateAsync(instanceData);
+      setIsLoading(true);
+      await whatsappService.createInstance(newInstanceName);
       setNewInstanceName('');
       setShowCreateForm(false);
-      refetchInstances();
+      await fetchInstances();
       
       // Conectar automaticamente após criar
       setTimeout(() => {
         handleConnectInstance(newInstanceName);
-      }, 1000);
-    } catch (error) {
+      }, 2000);
+    } catch (error: any) {
       console.error('Erro ao criar instância:', error);
+      setError('Erro ao criar instância: ' + (error.message || 'Erro desconhecido'));
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const handleConnectInstance = async (instanceName: string) => {
     try {
-      const result = await connectInstanceMutation.mutateAsync(instanceName);
-      
-      if (result.success && result.qrcode) {
-        setQRCodeData(result.qrcode);
+      setIsLoading(true);
+      setError(null);
+
+      // Verificar status atual
+      const status = await whatsappService.getInstanceStatus(instanceName);
+      if (status.status === 'connected') {
+        await fetchInstances();
+        return;
+      }
+
+      // Obter QR Code
+      const qrResponse = await whatsappService.getQRCode(instanceName);
+      if (qrResponse.qrcode) {
+        setQRCodeData(`data:image/png;base64,${qrResponse.qrcode}`);
         setSelectedInstance(instanceName);
         setShowQRCode(true);
+
+        // Iniciar polling de status
+        const checkConnection = setInterval(async () => {
+          try {
+            const currentStatus = await whatsappService.getInstanceStatus(instanceName);
+            if (currentStatus.status === 'connected') {
+              clearInterval(checkConnection);
+              setShowQRCode(false);
+              await fetchInstances();
+            }
+          } catch (error) {
+            console.error('Erro verificando status:', error);
+          }
+        }, 3000);
+
+        // Limpar polling após 2 minutos
+        setTimeout(() => {
+          clearInterval(checkConnection);
+        }, 120000);
       }
-    } catch (error) {
-      console.error('Erro ao conectar instância:', error);
+    } catch (error: any) {
+      console.error('Erro ao conectar:', error);
+      setError('Erro ao conectar WhatsApp. Por favor, tente novamente.');
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -72,15 +105,19 @@ export default function AgentsWhatsApp() {
     if (!confirm(`Tem certeza que deseja deletar a instância "${instanceName}"?`)) return;
 
     try {
-      await deleteInstanceMutation.mutateAsync(instanceName);
-      refetchInstances();
+      setIsLoading(true);
+      await whatsappService.deleteInstance(instanceName);
+      await fetchInstances();
       
       if (selectedInstance === instanceName) {
         setSelectedInstance('');
         setShowQRCode(false);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Erro ao deletar instância:', error);
+      setError('Erro ao deletar instância: ' + (error.message || 'Erro desconhecido'));
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -88,17 +125,19 @@ export default function AgentsWhatsApp() {
     if (!selectedInstance || !messageData.phone || !messageData.message) return;
 
     try {
-      const data: MessageSend = {
-        instanceName: selectedInstance,
-        remoteJid: messageData.phone.includes('@') ? messageData.phone : `${messageData.phone}@s.whatsapp.net`,
-        message: messageData.message
-      };
-
-      await sendMessageMutation.mutateAsync(data);
+      setIsLoading(true);
+      await whatsappService.sendMessage(
+        selectedInstance,
+        messageData.phone,
+        messageData.message
+      );
       setMessageData({ phone: '', message: '' });
       setShowMessageForm(false);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Erro ao enviar mensagem:', error);
+      setError('Erro ao enviar mensagem: ' + (error.message || 'Erro desconhecido'));
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -111,8 +150,8 @@ export default function AgentsWhatsApp() {
     }
   };
 
-  const getStatusIcon = (status: string, connected: boolean) => {
-    if (connected) return <Wifi className="w-4 h-4 text-green-600" />;
+  const getStatusIcon = (status: string) => {
+    if (status === 'open') return <Wifi className="w-4 h-4 text-green-600" />;
     if (status === 'connecting' || status === 'qr_updated') return <RefreshCw className="w-4 h-4 text-yellow-600 animate-spin" />;
     return <WifiOff className="w-4 h-4 text-red-600" />;
   };
@@ -128,7 +167,7 @@ export default function AgentsWhatsApp() {
         
         <div className="flex gap-3">
           <button
-            onClick={() => refetchInstances()}
+            onClick={() => fetchInstances()}
             className="flex items-center gap-2 px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
           >
             <RefreshCw className="w-4 h-4" />
@@ -162,7 +201,7 @@ export default function AgentsWhatsApp() {
             <div>
               <p className="text-sm font-medium text-gray-600">Conectadas</p>
               <p className="text-2xl font-bold text-green-600">
-                {instances.filter(i => i.connected).length}
+                {instances.filter(i => i.instance.status === 'open').length}
               </p>
             </div>
             <Wifi className="w-8 h-8 text-green-600" />
@@ -174,7 +213,7 @@ export default function AgentsWhatsApp() {
             <div>
               <p className="text-sm font-medium text-gray-600">Desconectadas</p>
               <p className="text-2xl font-bold text-red-600">
-                {instances.filter(i => !i.connected).length}
+                {instances.filter(i => i.instance.status !== 'open').length}
               </p>
             </div>
             <WifiOff className="w-8 h-8 text-red-600" />
@@ -186,7 +225,7 @@ export default function AgentsWhatsApp() {
             <div>
               <p className="text-sm font-medium text-gray-600">Conectando</p>
               <p className="text-2xl font-bold text-yellow-600">
-                {instances.filter(i => i.status === 'connecting' || i.status === 'qr_updated').length}
+                {instances.filter(i => i.instance.status === 'connecting' || i.instance.status === 'qr_updated').length}
               </p>
             </div>
             <RefreshCw className="w-8 h-8 text-yellow-600" />
@@ -194,136 +233,136 @@ export default function AgentsWhatsApp() {
         </div>
       </div>
 
-      {/* Main Content */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Instances List */}
-        <div className="lg:col-span-2">
-          <div className="bg-white rounded-lg shadow">
-            <div className="p-6 border-b border-gray-200">
-              <h2 className="text-lg font-semibold text-gray-900">Instâncias WhatsApp</h2>
-            </div>
-            
-            <div className="p-6">
-              {isLoading ? (
-                <div className="text-center py-8">
-                  <RefreshCw className="w-8 h-8 animate-spin mx-auto text-gray-400" />
-                  <p className="text-gray-500 mt-2">Carregando instâncias...</p>
-                </div>
-              ) : instances.length === 0 ? (
-                <div className="text-center py-8">
-                  <MessageSquare className="w-12 h-12 mx-auto text-gray-400" />
-                  <h3 className="text-lg font-medium text-gray-900 mt-2">Nenhuma instância encontrada</h3>
-                  <p className="text-gray-500 mt-1">Crie sua primeira instância WhatsApp</p>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  {instances.map((instance) => (
-                    <InstanceCard 
-                      key={instance.name}
-                      instance={instance}
-                      isSelected={selectedInstance === instance.name}
-                      onSelect={() => setSelectedInstance(instance.name)}
-                      onConnect={() => handleConnectInstance(instance.name)}
-                      onDelete={() => handleDeleteInstance(instance.name)}
-                      getStatusColor={getStatusColor}
-                      getStatusIcon={getStatusIcon}
-                    />
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-
-        {/* Sidebar */}
-        <div className="space-y-6">
-          {/* QR Code */}
-          {showQRCode && qrCodeData && (
-            <div className="bg-white rounded-lg shadow p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">QR Code</h3>
-              <div className="text-center">
-                <img 
-                  src={qrCodeData} 
-                  alt="QR Code WhatsApp" 
-                  className="mx-auto mb-4 border rounded-lg"
-                  style={{ maxWidth: '200px' }}
-                />
-                <p className="text-sm text-gray-600">
-                  Escaneie com o WhatsApp do dispositivo que deseja conectar
-                </p>
+      {/* Instances Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {instances.map((instance) => (
+          <div
+            key={instance.instance.instanceName}
+            className={`bg-white rounded-lg shadow p-6 ${
+              selectedInstance === instance.instance.instanceName ? 'ring-2 ring-blue-500' : ''
+            }`}
+          >
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <Smartphone className="w-5 h-5 text-gray-600" />
+                <h3 className="font-medium">{instance.instance.instanceName}</h3>
+              </div>
+              <div className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(instance.instance.status)}`}>
+                {instance.instance.status}
               </div>
             </div>
-          )}
 
-          {/* Send Message */}
-          {selectedInstance && instances.find(i => i.name === selectedInstance)?.connected && (
-            <div className="bg-white rounded-lg shadow p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Enviar Mensagem</h3>
-              
+            <div className="flex items-center justify-between mt-4">
               <button
-                onClick={() => setShowMessageForm(!showMessageForm)}
-                className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                onClick={() => handleConnectInstance(instance.instance.instanceName)}
+                className="flex items-center gap-2 px-3 py-1.5 text-sm bg-green-600 text-white rounded hover:bg-green-700 transition-colors"
+                disabled={isLoading}
               >
-                <Send className="w-4 h-4" />
-                {showMessageForm ? 'Cancelar' : 'Nova Mensagem'}
+                {getStatusIcon(instance.instance.status)}
+                {instance.instance.status === 'open' ? 'Conectado' : 'Conectar'}
               </button>
 
-              {showMessageForm && (
-                <div className="mt-4 space-y-3">
-                  <input
-                    type="text"
-                    placeholder="Número do WhatsApp (ex: 5511999999999)"
-                    value={messageData.phone}
-                    onChange={(e) => setMessageData(prev => ({ ...prev, phone: e.target.value }))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                  
-                  <textarea
-                    placeholder="Digite sua mensagem..."
-                    value={messageData.message}
-                    onChange={(e) => setMessageData(prev => ({ ...prev, message: e.target.value }))}
-                    rows={3}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                  
-                  <button
-                    onClick={handleSendMessage}
-                    disabled={!messageData.phone || !messageData.message || sendMessageMutation.isPending}
-                    className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                  >
-                    {sendMessageMutation.isPending ? (
-                      <RefreshCw className="w-4 h-4 animate-spin" />
-                    ) : (
-                      <Send className="w-4 h-4" />
-                    )}
-                    Enviar
-                  </button>
-                </div>
-              )}
+              <button
+                onClick={() => handleDeleteInstance(instance.instance.instanceName)}
+                className="flex items-center gap-2 px-3 py-1.5 text-sm bg-red-100 text-red-600 rounded hover:bg-red-200 transition-colors"
+                disabled={isLoading}
+              >
+                <Trash2 className="w-4 h-4" />
+                Remover
+              </button>
             </div>
-          )}
+          </div>
+        ))}
+      </div>
 
-          {/* Evolution API Status */}
+      {/* Sidebar */}
+      <div className="space-y-6">
+        {/* QR Code */}
+        {showQRCode && qrCodeData && (
           <div className="bg-white rounded-lg shadow p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Status da Evolution API</h3>
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">QR Code</h3>
+            <div className="text-center">
+              <img 
+                src={qrCodeData} 
+                alt="QR Code WhatsApp" 
+                className="mx-auto mb-4 border rounded-lg"
+                style={{ maxWidth: '200px' }}
+              />
+              <p className="text-sm text-gray-600">
+                Escaneie com o WhatsApp do dispositivo que deseja conectar
+              </p>
+            </div>
+          </div>
+        )}
+
+        {/* Send Message */}
+        {selectedInstance && instances.find(i => i.instance.instanceName === selectedInstance && i.instance.status === 'open') && (
+          <div className="bg-white rounded-lg shadow p-6">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Enviar Mensagem</h3>
             
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-gray-600">URL:</span>
-                <span className="text-sm font-mono text-gray-900">localhost:8081</span>
+            <button
+              onClick={() => setShowMessageForm(!showMessageForm)}
+              className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+            >
+              <Send className="w-4 h-4" />
+              {showMessageForm ? 'Cancelar' : 'Nova Mensagem'}
+            </button>
+
+            {showMessageForm && (
+              <div className="mt-4 space-y-3">
+                <input
+                  type="text"
+                  placeholder="Número do WhatsApp (ex: 5511999999999)"
+                  value={messageData.phone}
+                  onChange={(e) => setMessageData(prev => ({ ...prev, phone: e.target.value }))}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+                
+                <textarea
+                  placeholder="Digite sua mensagem..."
+                  value={messageData.message}
+                  onChange={(e) => setMessageData(prev => ({ ...prev, message: e.target.value }))}
+                  rows={3}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+                
+                <button
+                  onClick={handleSendMessage}
+                  disabled={!messageData.phone || !messageData.message || isLoading}
+                  className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  {isLoading ? (
+                    <RefreshCw className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <Send className="w-4 h-4" />
+                  )}
+                  Enviar
+                </button>
               </div>
-              
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-gray-600">Status:</span>
-                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                  Ativo
-                </span>
-              </div>
-              
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-gray-600">Versão:</span>
-                <span className="text-sm text-gray-900">v2.1.1</span>
-              </div>
+            )}
+          </div>
+        )}
+
+        {/* Evolution API Status */}
+        <div className="bg-white rounded-lg shadow p-6">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">Status da Evolution API</h3>
+          
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-gray-600">URL:</span>
+              <span className="text-sm font-mono text-gray-900">localhost:8080</span>
+            </div>
+            
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-gray-600">Status:</span>
+              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                Ativo
+              </span>
+            </div>
+            
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-gray-600">Versão:</span>
+              <span className="text-sm text-gray-900">v2.1.1</span>
             </div>
           </div>
         </div>
@@ -362,13 +401,37 @@ export default function AgentsWhatsApp() {
                 
                 <button
                   onClick={handleCreateInstance}
-                  disabled={!newInstanceName.trim() || createInstanceMutation.isPending}
+                  disabled={!newInstanceName.trim() || isLoading}
                   className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 >
-                  {createInstanceMutation.isPending ? 'Criando...' : 'Criar'}
+                  {isLoading ? 'Criando...' : 'Criar'}
                 </button>
               </div>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Error Message */}
+      {error && (
+        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative">
+          <span className="block sm:inline">{error}</span>
+          <button
+            onClick={() => setError(null)}
+            className="absolute top-0 bottom-0 right-0 px-4 py-3"
+          >
+            <span className="sr-only">Fechar</span>
+            <X className="h-5 w-5" />
+          </button>
+        </div>
+      )}
+
+      {/* Loading Indicator */}
+      {isLoading && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 flex items-center gap-4">
+            <RefreshCw className="w-6 h-6 text-blue-600 animate-spin" />
+            <span className="text-gray-900">Carregando...</span>
           </div>
         </div>
       )}
@@ -378,13 +441,13 @@ export default function AgentsWhatsApp() {
 
 // Instance Card Component
 interface InstanceCardProps {
-  instance: EvolutionInstance;
+  instance: WhatsAppInstance;
   isSelected: boolean;
   onSelect: () => void;
   onConnect: () => void;
   onDelete: () => void;
   getStatusColor: (status: string) => string;
-  getStatusIcon: (status: string, connected: boolean) => React.ReactNode;
+  getStatusIcon: (status: string) => React.ReactNode;
 }
 
 function InstanceCard({ 
@@ -396,11 +459,9 @@ function InstanceCard({
   getStatusColor, 
   getStatusIcon 
 }: InstanceCardProps) {
-  const { data: statusData } = useEvolutionInstanceStatus(instance.name);
-  
-  // Usar dados em tempo real se disponíveis
-  const currentStatus = statusData?.status || instance.status;
-  const isConnected = statusData?.connected ?? instance.connected;
+  // Usar dados da instância
+  const currentStatus = instance.instance.status;
+  const isConnected = currentStatus === 'open';
   
   return (
     <div 
@@ -412,11 +473,11 @@ function InstanceCard({
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-3">
           <div className="flex-shrink-0">
-            {getStatusIcon(currentStatus, isConnected)}
+            {getStatusIcon(currentStatus)}
           </div>
           
           <div>
-            <h3 className="text-sm font-medium text-gray-900">{instance.name}</h3>
+            <h3 className="text-sm font-medium text-gray-900">{instance.instance.instanceName}</h3>
             <div className="flex items-center space-x-2 mt-1">
               <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${getStatusColor(currentStatus)}`}>
                 {currentStatus === 'open' ? 'Conectado' : 
@@ -424,7 +485,7 @@ function InstanceCard({
                  currentStatus === 'qr_updated' ? 'QR Atualizado' : 'Desconectado'}
               </span>
               <span className="text-xs text-gray-500">
-                {new Date(instance.created_at).toLocaleDateString()}
+                {new Date().toLocaleDateString()}
               </span>
             </div>
           </div>

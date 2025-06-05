@@ -1,0 +1,36 @@
+version: '3.3'
+
+services:
+  evolution-api:
+    container_name: evolution-api
+    image: atendai/evolution-api:v1.4.0
+    restart: always
+    ports:
+      - "8081:8080"
+    environment:
+      - SERVER_URL=http://localhost:8081
+      - SERVER_PORT=8080
+      - AUTHENTICATION_API_KEY=B6D711FCDE4D4FD5936544120E713C37
+      - AUTHENTICATION_EXPOSE_IN_FETCH_INSTANCES=true
+      - CORS_ORIGIN=*
+      - CORS_METHODS=POST,GET,PUT,DELETE
+      - CORS_CREDENTIALS=true
+      - DATABASE_ENABLED=false
+      - DATABASE_CONNECTION_TYPE=memory
+      - STORE_PATH=/evolution/store
+      - STORE_CLEANING_INTERVAL=7200
+      - STORE_MESSAGE_CLEANING_INTERVAL=7200
+      - STORE_MAX_FILES=100
+      - STORE_MAX_SIZE=100
+      - WEBSOCKET_ENABLED=true
+      - SERVER_DISABLE_DOCS=false
+      - SERVER_TYPE=http
+      - SERVER_DISABLE_MANAGER=false
+      - SWAGGER_ENABLED=true
+      # WhatsApp Web Version Configuration - Latest version as per video
+      - CONFIG_SESSION_PHONE_VERSION=2.3000.1016165825
+    volumes:
+      - evolution_store:/evolution/store
+
+volumes:
+  evolution_store: 

@@ -1,0 +1,22 @@
+[variables]
+NODE_VERSION = "18"
+PYTHON_VERSION = "3.11"
+
+[phases.setup]
+nixPkgs = ["python311", "nodejs-18_x", "npm"]
+
+[phases.install]
+cmds = [
+  "pip install -r requirements.txt",
+  "cd frontend_bolt && npm install"
+]
+
+[phases.build]
+cmds = [
+  "cd frontend_bolt && npm run build",
+  "mkdir -p static",
+  "cp -r frontend_bolt/dist/* static/"
+]
+
+[start]
+cmd = "uvicorn main:app --host 0.0.0.0 --port $PORT" 

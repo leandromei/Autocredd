@@ -1,98 +1,147 @@
-import { useState, useRef, useEffect } from 'react';
-import { PageHeader } from '@/components/common/PageHeader';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import React, { useState } from 'react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
-import { 
-  MessageCircle, 
-  Send, 
-  Pause, 
-  Play,
-  Users, 
-  Clock, 
-  TrendingUp,
-  CheckCircle,
-  Eye,
-  Reply,
-  Upload,
-  Download,
-  Image,
-  FileText,
-  Video
-} from 'lucide-react';
+import { MessageCircle, Send, Upload, Users, TrendingUp, Clock, Settings, Image, FileText } from 'lucide-react';
 
-export default function WhatsApp() {
-  const [isActive, setIsActive] = useState(false);
-  const [messageText, setMessageText] = useState('Olá! 👋\n\nVocê tem interesse em crédito consignado com as *melhores taxas* do mercado?\n\nTemos condições especiais para você! 💰\n\nResponda com *SIM* para mais informações.');
-  const [contacts, setContacts] = useState([
-    { id: 1, name: 'João Silva', phone: '(11) 99999-1111', status: 'enviado', sentAt: '14:30', viewed: true, response: 'SIM' },
-    { id: 2, name: 'Maria Santos', phone: '(11) 98888-2222', status: 'pendente', sentAt: '', viewed: false, response: '' },
-    { id: 3, name: 'Pedro Costa', phone: '(21) 97777-3333', status: 'entregue', sentAt: '14:25', viewed: true, response: '' },
-    { id: 4, name: 'Ana Oliveira', phone: '(31) 96666-4444', status: 'falhou', sentAt: '14:20', viewed: false, response: '' },
-    { id: 5, name: 'Carlos Lima', phone: '(11) 95555-5555', status: 'visualizado', sentAt: '14:15', viewed: true, response: 'NÃO' },
-  ]);
-  const [stats, setStats] = useState({
-    totalContacts: 180,
-    sent: 95,
-    delivered: 88,
-    viewed: 76,
-    responded: 32,
-    interested: 15,
-    responseRate: '36.8%'
-  });
+export default function WhatsAppProspecting() {
+  const [message, setMessage] = useState('');
+  const [sending, setSending] = useState(false);
+
+  const campaigns = [
+    {
+      id: 1,
+      name: 'Consignado Especial',
+      status: 'ativo',
+      recipients: 1500,
+      sent: 890,
+      delivered: 845,
+      opened: 678,
+      responses: 134,
+      conversions: 23
+    },
+    {
+      id: 2,
+      name: 'Black Friday Cartão',
+      status: 'agendado',
+      recipients: 2000,
+      sent: 0,
+      delivered: 0,
+      opened: 0,
+      responses: 0,
+      conversions: 0
+    },
+    {
+      id: 3,
+      name: 'Refinanciamento Q4',
+      status: 'concluido',
+      recipients: 800,
+      sent: 800,
+      delivered: 776,
+      opened: 612,
+      responses: 89,
+      conversions: 17
+    }
+  ];
+
+  const templates = [
+    {
+      id: 1,
+      name: 'Crédito Consignado',
+      message: '🏦 *Crédito Consignado AutoCred*\n\nOlá! Você tem interesse em crédito consignado com as melhores taxas do mercado?\n\n✅ Taxa a partir de 1,2% ao mês\n✅ Aprovação em 24h\n✅ Sem consulta ao SPC/Serasa\n\nResponda *SIM* para simular sem compromisso!',
+      type: 'text',
+      category: 'credito'
+    },
+    {
+      id: 2,
+      name: 'Cartão Premium',
+      message: '💳 *Cartão de Crédito Premium*\n\nCartão sem anuidade com limite pré-aprovado!\n\n🎁 Benefícios exclusivos:\n• Cashback em todas as compras\n• Acesso a salas VIP\n• Programa de pontos\n\nClique no link para solicitar: [LINK]',
+      type: 'text',
+      category: 'cartao'
+    },
+    {
+      id: 3,
+      name: 'Refinanciamento',
+      message: '🏠 *Refinancie suas dívidas*\n\nQuite todas as suas dívidas com uma única parcela!\n\n📊 Simule agora:\n• Taxa reduzida\n• Prazo estendido\n• Redução até 70% das parcelas\n\nFale com nossos especialistas: [LINK]',
+      type: 'text',
+      category: 'refinanciamento'
+    }
+  ];
+
+  const connections = [
+    {
+      id: 1,
+      name: 'Instância Principal',
+      phone: '11999999999',
+      status: 'conectado',
+      qrCode: false,
+      lastActivity: '2 min atrás'
+    },
+    {
+      id: 2,
+      name: 'Instância Backup',
+      phone: '11888888888',
+      status: 'desconectado',
+      qrCode: true,
+      lastActivity: '1 hora atrás'
+    }
+  ];
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'enviado':
-        return 'bg-blue-100 text-blue-700 border-blue-200';
-      case 'entregue':
-        return 'bg-green-100 text-green-700 border-green-200';
-      case 'visualizado':
-        return 'bg-purple-100 text-purple-700 border-purple-200';
-      case 'pendente':
-        return 'bg-gray-100 text-gray-700 border-gray-200';
-      case 'falhou':
-        return 'bg-red-100 text-red-700 border-red-200';
-      default:
-        return 'bg-gray-100 text-gray-700 border-gray-200';
+      case 'ativo': return 'bg-green-100 text-green-800';
+      case 'agendado': return 'bg-yellow-100 text-yellow-800';
+      case 'concluido': return 'bg-blue-100 text-blue-800';
+      case 'pausado': return 'bg-gray-100 text-gray-800';
+      case 'conectado': return 'bg-green-100 text-green-800';
+      case 'desconectado': return 'bg-red-100 text-red-800';
+      default: return 'bg-gray-100 text-gray-800';
     }
   };
 
-  const getResponseColor = (response: string) => {
-    if (response === 'SIM') return 'text-green-600 font-medium';
-    if (response === 'NÃO') return 'text-red-600 font-medium';
-    return 'text-gray-400';
-  };
-
-  const handleToggleCampaign = () => {
-    setIsActive(!isActive);
+  const handleSendMessage = async () => {
+    setSending(true);
+    setTimeout(() => {
+      setSending(false);
+      setMessage('');
+    }, 2000);
   };
 
   return (
-    <div className="space-y-6 animate-fade-in">
-      <PageHeader
-        title="WhatsApp Business"
-        description="Campanhas de marketing via WhatsApp para maior engajamento"
-      >
-        <div className="flex items-center gap-2 text-green-600">
-          <MessageCircle className="h-5 w-5" />
-          <span className="text-sm font-medium">Marketing Digital</span>
+    <div className="p-6 space-y-6">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">WhatsApp Business</h1>
+          <p className="text-gray-600 mt-1">Marketing via WhatsApp para prospecção</p>
         </div>
-      </PageHeader>
+        <div className="flex gap-2">
+          <Button variant="outline" size="sm">
+            <Settings className="h-4 w-4 mr-2" />
+            Configurar API
+          </Button>
+          <Button size="sm">
+            <MessageCircle className="h-4 w-4 mr-2" />
+            Nova Campanha
+          </Button>
+        </div>
+      </div>
 
-      {/* Estatísticas */}
-      <div className="grid grid-cols-1 md:grid-cols-7 gap-4">
+      {/* Metrics Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Total de Contatos</p>
-                <p className="text-2xl font-bold">{stats.totalContacts}</p>
+                <p className="text-sm text-gray-600">Mensagens Hoje</p>
+                <p className="text-2xl font-bold text-green-600">1,567</p>
+                <p className="text-sm text-green-600">+22% vs ontem</p>
               </div>
-              <Users className="h-8 w-8 text-blue-600" />
+              <div className="p-2 bg-green-100 rounded-lg">
+                <MessageCircle className="h-6 w-6 text-green-600" />
+              </div>
             </div>
           </CardContent>
         </Card>
@@ -101,10 +150,13 @@ export default function WhatsApp() {
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Enviadas</p>
-                <p className="text-2xl font-bold text-blue-600">{stats.sent}</p>
+                <p className="text-sm text-gray-600">Taxa de Entrega</p>
+                <p className="text-2xl font-bold text-blue-600">97%</p>
+                <p className="text-sm text-green-600">+1% vs ontem</p>
               </div>
-              <Send className="h-8 w-8 text-blue-600" />
+              <div className="p-2 bg-blue-100 rounded-lg">
+                <TrendingUp className="h-6 w-6 text-blue-600" />
+              </div>
             </div>
           </CardContent>
         </Card>
@@ -113,10 +165,13 @@ export default function WhatsApp() {
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Entregues</p>
-                <p className="text-2xl font-bold text-green-600">{stats.delivered}</p>
+                <p className="text-sm text-gray-600">Taxa de Abertura</p>
+                <p className="text-2xl font-bold text-purple-600">85%</p>
+                <p className="text-sm text-green-600">+3% vs ontem</p>
               </div>
-              <CheckCircle className="h-8 w-8 text-green-600" />
+              <div className="p-2 bg-purple-100 rounded-lg">
+                <Clock className="h-6 w-6 text-purple-600" />
+              </div>
             </div>
           </CardContent>
         </Card>
@@ -125,237 +180,242 @@ export default function WhatsApp() {
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Visualizadas</p>
-                <p className="text-2xl font-bold text-purple-600">{stats.viewed}</p>
+                <p className="text-sm text-gray-600">Conversões</p>
+                <p className="text-2xl font-bold text-orange-600">234</p>
+                <p className="text-sm text-green-600">+15% vs ontem</p>
               </div>
-              <Eye className="h-8 w-8 text-purple-600" />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Respostas</p>
-                <p className="text-2xl font-bold text-orange-600">{stats.responded}</p>
+              <div className="p-2 bg-orange-100 rounded-lg">
+                <Users className="h-6 w-6 text-orange-600" />
               </div>
-              <Reply className="h-8 w-8 text-orange-600" />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Interessados</p>
-                <p className="text-2xl font-bold text-pink-600">{stats.interested}</p>
-              </div>
-              <TrendingUp className="h-8 w-8 text-pink-600" />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Taxa de Resposta</p>
-                <p className="text-2xl font-bold text-indigo-600">{stats.responseRate}</p>
-              </div>
-              <MessageCircle className="h-8 w-8 text-indigo-600" />
             </div>
           </CardContent>
         </Card>
       </div>
 
-      <div className="grid lg:grid-cols-3 gap-6">
-        {/* Editor de Mensagem */}
-        <Card className="lg:col-span-1">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <MessageCircle className="h-5 w-5" />
-              Editor de Mensagem
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="campaign-name">Nome da Campanha</Label>
-              <Input 
-                id="campaign-name" 
-                placeholder="Digite o nome da campanha"
-                defaultValue="Campanha WhatsApp - Crédito Consignado"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="message">Mensagem WhatsApp</Label>
-              <Textarea 
-                id="message" 
-                placeholder="Digite sua mensagem... Use *texto* para negrito e _texto_ para itálico"
-                rows={6}
-                value={messageText}
-                onChange={(e) => setMessageText(e.target.value)}
-              />
-              <div className="text-xs text-muted-foreground">
-                Caracteres: {messageText.length} • Suporte a emojis, negrito (*texto*) e itálico (_texto_)
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label>Anexos (Opcional)</Label>
-              <div className="grid grid-cols-3 gap-2">
-                <Button variant="outline" size="sm">
-                  <Image className="h-4 w-4 mr-1" />
-                  Imagem
-                </Button>
-                <Button variant="outline" size="sm">
-                  <Video className="h-4 w-4 mr-1" />
-                  Vídeo
-                </Button>
-                <Button variant="outline" size="sm">
-                  <FileText className="h-4 w-4 mr-1" />
-                  Arquivo
-                </Button>
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="schedule">Agendar Envio</Label>
-              <Input 
-                id="schedule" 
-                type="datetime-local"
-              />
-            </div>
-
-            <div className="flex gap-2">
-              <Button 
-                onClick={handleToggleCampaign}
-                className={`flex-1 ${isActive ? 'bg-red-600 hover:bg-red-700' : 'bg-green-600 hover:bg-green-700'}`}
-              >
-                {isActive ? (
-                  <>
-                    <Pause className="h-4 w-4 mr-2" />
-                    Pausar
-                  </>
-                ) : (
-                  <>
-                    <Send className="h-4 w-4 mr-2" />
-                    Enviar
-                  </>
-                )}
-              </Button>
-            </div>
-
-            <div className="flex gap-2">
-              <Button variant="outline" className="flex-1">
-                <Upload className="h-4 w-4 mr-2" />
-                Importar Lista
-              </Button>
-              <Button variant="outline" className="flex-1">
-                <Download className="h-4 w-4 mr-2" />
-                Relatório
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Lista de Contatos e Respostas */}
-        <Card className="lg:col-span-2">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Users className="h-5 w-5" />
-              Status dos Envios
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              {contacts.map((contact) => (
-                <div key={contact.id} className="flex items-center justify-between p-3 border rounded-lg">
-                  <div className="flex items-center gap-3">
-                    <MessageCircle className="h-4 w-4 text-green-600" />
-                    <div>
-                      <div className="font-medium">{contact.name}</div>
-                      <div className="text-sm text-muted-foreground">{contact.phone}</div>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    {contact.viewed && (
-                      <Eye className="h-4 w-4 text-blue-500" />
-                    )}
-                    {contact.sentAt && (
-                      <span className="text-sm text-muted-foreground">
-                        {contact.sentAt}
-                      </span>
-                    )}
-                    <Badge className={`font-medium border ${getStatusColor(contact.status)}`}>
-                      {contact.status}
-                    </Badge>
-                    <span className={`text-sm ${getResponseColor(contact.response)}`}>
-                      {contact.response || '--'}
-                    </span>
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            <div className="mt-4 pt-4 border-t">
-              <p className="text-sm text-muted-foreground text-center">
-                Mostrando 5 de {stats.totalContacts} contatos
-              </p>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Preview da Mensagem WhatsApp */}
+      {/* WhatsApp Connections */}
       <Card>
         <CardHeader>
-          <CardTitle>Preview da Mensagem WhatsApp</CardTitle>
+          <CardTitle className="flex items-center gap-2">
+            <MessageCircle className="h-5 w-5" />
+            Conexões WhatsApp
+          </CardTitle>
+          <CardDescription>
+            Gerencie suas instâncias do WhatsApp Business
+          </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="max-w-sm mx-auto">
-            <div className="bg-green-500 text-white text-center py-2 rounded-t-lg font-medium">
-              <div className="flex items-center justify-center gap-2">
-                <MessageCircle className="h-4 w-4" />
-                AutoCred Business
-              </div>
-            </div>
-            <div className="bg-[#e5ddd5] p-4 min-h-[200px] rounded-b-lg">
-              <div className="bg-white rounded-lg p-3 shadow-sm max-w-[80%] ml-auto">
-                <div className="whitespace-pre-wrap text-sm">
-                  {messageText.split('*').map((part, index) => 
-                    index % 2 === 1 ? <strong key={index}>{part}</strong> : part
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {connections.map((connection) => (
+              <div key={connection.id} className="border rounded-lg p-4">
+                <div className="flex items-center justify-between mb-3">
+                  <div>
+                    <h3 className="font-medium text-gray-900">{connection.name}</h3>
+                    <p className="text-sm text-gray-600">{connection.phone}</p>
+                  </div>
+                  <Badge className={getStatusColor(connection.status)}>
+                    {connection.status}
+                  </Badge>
+                </div>
+                
+                <p className="text-sm text-gray-600 mb-3">
+                  Última atividade: {connection.lastActivity}
+                </p>
+                
+                <div className="flex gap-2">
+                  {connection.qrCode && (
+                    <Button variant="outline" size="sm">
+                      Ver QR Code
+                    </Button>
                   )}
-                </div>
-                <div className="flex items-center justify-end gap-1 mt-2">
-                  <span className="text-xs text-gray-500">14:30</span>
-                  <CheckCircle className="h-3 w-3 text-blue-500" />
-                  <CheckCircle className="h-3 w-3 text-blue-500 -ml-1" />
+                  <Button variant="outline" size="sm">
+                    Reconectar
+                  </Button>
                 </div>
               </div>
-            </div>
+            ))}
           </div>
         </CardContent>
       </Card>
 
-      {/* Status da Campanha */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Message Composer */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Send className="h-5 w-5" />
+              Criar Mensagem
+            </CardTitle>
+            <CardDescription>
+              Envie mensagens personalizadas para seus contatos
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div>
+              <label className="text-sm font-medium text-gray-700 mb-2 block">
+                Lista de contatos (separados por vírgula)
+              </label>
+              <Textarea 
+                placeholder="5511999999999, 5511888888888..."
+                rows={2}
+              />
+            </div>
+
+            <div>
+              <label className="text-sm font-medium text-gray-700 mb-2 block">
+                Mensagem ({message.length}/4096 caracteres)
+              </label>
+              <Textarea 
+                value={message}
+                onChange={(e) => setMessage(e.target.value)}
+                placeholder="Digite sua mensagem aqui...\n\nUse *negrito*, _itálico_ e emojis 😊"
+                rows={6}
+                maxLength={4096}
+              />
+            </div>
+
+            <div className="flex gap-2">
+              <Button variant="outline" size="sm">
+                <Image className="h-4 w-4 mr-2" />
+                Imagem
+              </Button>
+              <Button variant="outline" size="sm">
+                <FileText className="h-4 w-4 mr-2" />
+                Documento
+              </Button>
+            </div>
+
+            <div className="flex gap-2">
+              <Button 
+                onClick={handleSendMessage}
+                disabled={sending || !message.trim()}
+                className="flex-1"
+              >
+                {sending ? (
+                  <>
+                    <Clock className="h-4 w-4 mr-2 animate-spin" />
+                    Enviando...
+                  </>
+                ) : (
+                  <>
+                    <Send className="h-4 w-4 mr-2" />
+                    Enviar Mensagem
+                  </>
+                )}
+              </Button>
+              <Button variant="outline">
+                <Upload className="h-4 w-4 mr-2" />
+                Lista
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Templates */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <MessageCircle className="h-5 w-5" />
+              Templates WhatsApp
+            </CardTitle>
+            <CardDescription>
+              Modelos pré-aprovados para suas campanhas
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {templates.map((template) => (
+                <div key={template.id} className="border rounded-lg p-3">
+                  <div className="flex items-center justify-between mb-2">
+                    <h3 className="font-medium text-gray-900">{template.name}</h3>
+                    <Badge variant="outline" className="text-xs">
+                      {template.category}
+                    </Badge>
+                  </div>
+                  <div className="bg-gray-50 rounded-lg p-3 mb-3">
+                    <p className="text-sm text-gray-700 whitespace-pre-line">
+                      {template.message}
+                    </p>
+                  </div>
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => setMessage(template.message)}
+                  >
+                    Usar Template
+                  </Button>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Campaigns List */}
       <Card>
         <CardHeader>
-          <CardTitle>Status da Campanha</CardTitle>
+          <CardTitle>Campanhas WhatsApp</CardTitle>
+          <CardDescription>
+            {campaigns.length} campanhas criadas
+          </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="flex items-center justify-between p-4 bg-muted rounded-lg">
-            <div className="flex items-center gap-3">
-              <div className={`w-3 h-3 rounded-full ${isActive ? 'bg-green-500 animate-pulse' : 'bg-gray-400'}`}></div>
-              <span className="font-medium">
-                {isActive ? 'Campanha Ativa - Enviando mensagens WhatsApp' : 'Campanha Pausada'}
-              </span>
-            </div>
-            <div className="text-sm text-muted-foreground">
-              {isActive ? 'Próximo envio em 10 segundos (respeitando limites da API)' : 'Aguardando início'}
-            </div>
+          <div className="space-y-4">
+            {campaigns.map((campaign) => (
+              <div key={campaign.id} className="border rounded-lg p-4">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-3">
+                    <h3 className="font-medium text-gray-900">{campaign.name}</h3>
+                    <Badge className={getStatusColor(campaign.status)}>
+                      {campaign.status}
+                    </Badge>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button variant="outline" size="sm">
+                      Ver Relatório
+                    </Button>
+                    <Button variant="outline" size="sm">
+                      Editar
+                    </Button>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 md:grid-cols-6 gap-4 mb-3">
+                  <div>
+                    <p className="text-sm text-gray-600">Destinatários</p>
+                    <p className="font-semibold">{campaign.recipients.toLocaleString()}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">Enviadas</p>
+                    <p className="font-semibold text-blue-600">{campaign.sent.toLocaleString()}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">Entregues</p>
+                    <p className="font-semibold text-green-600">{campaign.delivered.toLocaleString()}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">Abertas</p>
+                    <p className="font-semibold text-purple-600">{campaign.opened.toLocaleString()}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">Respostas</p>
+                    <p className="font-semibold text-orange-600">{campaign.responses}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">Conversões</p>
+                    <p className="font-semibold text-pink-600">{campaign.conversions}</p>
+                  </div>
+                </div>
+
+                {campaign.recipients > 0 && (
+                  <div className="w-full bg-gray-200 rounded-full h-2">
+                    <div 
+                      className="bg-green-600 h-2 rounded-full transition-all duration-300"
+                      style={{ width: `${(campaign.sent / campaign.recipients) * 100}%` }}
+                    ></div>
+                  </div>
+                )}
+              </div>
+            ))}
           </div>
         </CardContent>
       </Card>

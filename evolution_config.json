@@ -1,0 +1,19 @@
+{
+  "authentication": {
+    "api_key": "429683C4C977415CAAFCCE10F7D57E11"
+  },
+  "websocket": {
+    "enabled": true
+  },
+  "qrcode": {
+    "color": "#198754"
+  },
+  "log": {
+    "level": "info",
+    "color": true
+  },
+  "instance": {
+    "max_retry_connect": 5,
+    "connection_timeout": 60000
+  }
+} 

@@ -1,7 +1,7 @@
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend, Sector } from 'recharts';
-import { PageHeader } from '@/components/common/PageHeader';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { dashboardSummary } from '@/data/mockData';
+import { PageHeader } from '../../components/common/PageHeader';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../components/ui/card';
+import { dashboardSummary } from '../../data/mockData';
 import { Users, FileText, DollarSign, ClipboardList } from 'lucide-react';
 import { useState } from 'react';
 

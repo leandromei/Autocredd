@@ -3,6 +3,10 @@ builder = "nixpacks"
 
 [deploy]
 startCommand = "uvicorn main:app --host 0.0.0.0 --port $PORT --root-path=''"
-healthcheckPath = "/"
+healthcheckPath = "/api/health"
 healthcheckTimeout = 300
-restartPolicyType = "always" 
+restartPolicyType = "always"
+
+[variables]
+ENVIRONMENT = "railway"
+NODE_VERSION = "18" 

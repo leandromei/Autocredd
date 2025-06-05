@@ -6,6 +6,8 @@ Backend simplificado para AutoCred - Compatível com Railway
 from fastapi import FastAPI, HTTPException, Depends, Form, UploadFile, File, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 from pydantic import BaseModel
 import uvicorn
 from typing import Dict, Any, Optional, List
@@ -174,6 +176,10 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Servir arquivos estáticos do frontend (para Railway)
+if os.path.exists("static"):
+    app.mount("/static", StaticFiles(directory="static"), name="static")
+
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
 # Usuários simulados
@@ -315,7 +321,10 @@ def authenticate_user(email: str, password: str) -> Dict[str, Any] | None:
 
 @app.get("/")
 async def root():
-    return {"message": "AutoCred API está funcionando!", "status": "online"}
+    """Serve o frontend React ou retorna API info"""
+    if os.path.exists("static/index.html"):
+        return FileResponse("static/index.html")
+    return {"message": "AutoCred API está funcionando!", "status": "online", "environment": ENVIRONMENT}
 
 @app.get("/api/health")
 async def health_check():
@@ -2424,14 +2433,17 @@ async def get_real_qr_code(agent_id: str):
             "instance_name": f"agent_{agent_id}",
             "timestamp": datetime.now().isoformat(),
             "status": "generated",
-            "message": "QR Code gerado com sucesso! Escaneie com WhatsApp.",
+            "message": "⚠️ QR Code DEMO gerado! Este é apenas visual - configure Evolution API para WhatsApp real.",
             "instructions": [
-                "1. Abra o WhatsApp no seu celular",
-                "2. Vá em Menu > Aparelhos conectados",
-                "3. Toque em 'Conectar um aparelho'",
-                "4. Escaneie este QR Code"
+                "🧪 MODO DESENVOLVIMENTO:",
+                "1. Este QR Code não conecta ao WhatsApp real",
+                "2. Use o botão 'Simular Conexão' para testar",
+                "3. Para produção: configure Evolution API",
+                "4. Veja arquivo WHATSAPP_SETUP.md para instruções"
             ],
-            "method": "autocred_internal"
+            "method": "autocred_internal_demo",
+            "development_mode": True,
+            "evolution_api_configured": False
         }
         
     except Exception as e:

@@ -1,60 +1,25 @@
 @echo off
-echo Iniciando Evolution API para AutoCred...
-echo.
+echo Iniciando Evolution API...
 
-REM Verificar se Docker está instalado
-docker --version >nul 2>&1
-if errorlevel 1 (
-    echo ❌ Docker não encontrado! Instale o Docker Desktop primeiro.
-    echo Baixe em: https://www.docker.com/products/docker-desktop
-    pause
-    exit /b 1
-)
+REM Remover container antigo
+docker rm -f evolution-api
 
-echo ✅ Docker encontrado!
+REM Criar volume para persistência
+docker volume create evolution-data
 
-REM Ir para pasta da Evolution API
-cd /d "C:\Users\jovem\Downloads\evolution"
-
-REM Verificar se existe docker-compose.yml
-if not exist docker-compose.yml (
-    echo ❌ Arquivo docker-compose.yml não encontrado!
-    echo Certifique-se de que a Evolution API está na pasta correta.
-    pause
-    exit /b 1
-)
-
-echo 🔄 Iniciando containers da Evolution API...
-
-REM Parar containers existentes se estiverem rodando
-docker-compose down
-
-REM Iniciar containers
-docker-compose up -d
+REM Iniciar Evolution API versão 2.2.3
+docker run -d --name evolution-api ^
+-e AUTHENTICATION_API_KEY=429683C4C977415CAAFCCE10F7D57E11 ^
+-e CORS_ORIGIN=* ^
+-e STORE_PATH=/store ^
+-e WEBSOCKET_ENABLED=true ^
+-p 8080:8080 ^
+-v evolution-data:/store ^
+davidsongomes/evolution-api:2.2.3
 
 echo.
-echo 🎯 Evolution API iniciada com sucesso!
-echo.
-echo 📋 Informações importantes:
-echo    🌐 URL da API: http://localhost:8081
-echo    🔑 API Key: B6D711FCDE4D4FD5936544120E713C37
-echo    📊 Postgres: localhost:5432
-echo    🗄️  Redis: localhost:6380
-echo.
-echo 📱 Para usar no AutoCred:
-echo    1. Acesse a aba "Agentes WhatsApp" no sistema
-echo    2. Crie uma nova instância
-echo    3. Escaneie o QR Code com o WhatsApp
-echo.
+echo Evolution API iniciada! Aguarde alguns segundos...
+timeout /t 5
 
-REM Aguardar alguns segundos para verificar se os containers subiram
-timeout /t 10 /nobreak >nul
-
-echo 🔍 Verificando status dos containers...
-docker-compose ps
-
-echo.
-echo ✨ Tudo pronto! A Evolution API está rodando.
-echo    Você pode agora voltar ao AutoCred e conectar o WhatsApp.
-echo.
-pause 
+REM Mostrar logs
+docker logs evolution-api 

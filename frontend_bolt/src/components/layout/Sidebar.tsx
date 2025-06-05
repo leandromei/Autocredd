@@ -30,11 +30,11 @@ import {
   Home,
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
-import { Button } from '@/components/ui/button';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { useAuth } from '@/hooks/useAuth';
-import { useDarkMode } from '@/hooks/useDarkMode';
+import { Button } from '../ui/button';
+import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '../ui/dropdown-menu';
+import { useAuth } from '@/contexts/AuthContext';
+import { useDarkMode } from '../../hooks/useDarkMode';
 
 const navigation = [
   { name: 'Leads', href: '/leads', icon: FileText },

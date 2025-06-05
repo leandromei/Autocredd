@@ -20,8 +20,15 @@ import {
   Wifi,
   WifiOff,
   QrCode,
-  X
+  X,
+  Search,
+  MoreVertical,
+  MessageCircle,
+  Phone,
+  Filter
 } from 'lucide-react';
+import { AgentsService } from '../../services/agents.service';
+import { WhatsAppQRCode } from '../../components/WhatsAppQRCode';
 
 interface AgentPersonality {
   id: string;
@@ -121,7 +128,7 @@ const CustomAgents: React.FC = () => {
   const loadData = async () => {
     try {
       setLoading(true);
-      console.log("🔄 Carregando dados dos agentes...");
+      console.log("🔄 DEBUG - Carregando dados dos agentes...");
       
       const [agentsRes, personalitiesRes, templatesRes] = await Promise.all([
         fetch('/api/agents/'),
@@ -129,7 +136,7 @@ const CustomAgents: React.FC = () => {
         fetch('/api/agents/templates')
       ]);
 
-      console.log("📊 Status das requisições:", {
+      console.log("📊 DEBUG - Status das requisições:", {
         agents: agentsRes.status,
         personalities: personalitiesRes.status,
         templates: templatesRes.status
@@ -137,32 +144,44 @@ const CustomAgents: React.FC = () => {
 
       if (agentsRes.ok) {
         const agentsData = await agentsRes.json();
-        console.log("✅ Agentes carregados:", agentsData);
+        console.log("✅ DEBUG - Agentes carregados:", agentsData);
         setAgents(agentsData.agents || []);
+      } else {
+        console.error("❌ DEBUG - Erro ao carregar agentes:", agentsRes.status);
       }
 
       if (personalitiesRes.ok) {
         const personalitiesData = await personalitiesRes.json();
-        console.log("✅ Personalidades carregadas:", personalitiesData);
+        console.log("✅ DEBUG - Personalidades da API:", personalitiesData);
         // Manter personalidades padrão se a API retornar vazio, senão usar as da API
         if (personalitiesData.personalities && personalitiesData.personalities.length > 0) {
+          console.log("✅ DEBUG - Usando personalidades da API");
           setPersonalities(personalitiesData.personalities);
+        } else {
+          console.log("ℹ️ DEBUG - API retornou vazio, usando personalidades padrão");
         }
       } else {
-        console.error("❌ Erro ao carregar personalidades:", personalitiesRes.status);
-        console.log("ℹ️ Usando personalidades padrão");
+        console.error("❌ DEBUG - Erro ao carregar personalidades:", personalitiesRes.status);
+        console.log("ℹ️ DEBUG - Usando personalidades padrão");
       }
 
       if (templatesRes.ok) {
         const templatesData = await templatesRes.json();
-        console.log("✅ Templates carregados:", templatesData);
+        console.log("✅ DEBUG - Templates carregados:", templatesData);
         setTemplates(templatesData.templates || []);
+      } else {
+        console.error("❌ DEBUG - Erro ao carregar templates:", templatesRes.status);
       }
-    } catch (error) {
-      console.error('❌ Erro ao carregar dados:', error);
+    } catch (error: any) {
+      console.error('❌ DEBUG - Erro ao carregar dados:', error);
     } finally {
       setLoading(false);
-      console.log("✅ Carregamento concluído");
+      console.log("✅ DEBUG - Carregamento concluído");
+      console.log("📋 DEBUG - Estado final:", {
+        agentes: agents.length,
+        personalidades: personalities.length,
+        templates: templates.length
+      });
     }
   };
 
@@ -170,20 +189,67 @@ const CustomAgents: React.FC = () => {
     e.preventDefault();
     
     try {
+      console.log("🚀 DEBUG - Iniciando criação de agente");
+      console.log("📝 DEBUG - Dados do formulário:", formData);
+      console.log("👥 DEBUG - Personalidades disponíveis:", personalities.length);
+      
+      // Validação básica
+      if (!formData.name.trim()) {
+        alert('Nome do agente é obrigatório');
+        return;
+      }
+      
+      if (!formData.description.trim()) {
+        alert('Descrição é obrigatória');
+        return;
+      }
+      
+      if (!formData.personality_id) {
+        alert('Selecione uma personalidade');
+        return;
+      }
+      
+      if (!formData.custom_prompt.trim()) {
+        alert('Prompt personalizado é obrigatório');
+        return;
+      }
+      
+      console.log("✅ DEBUG - Validação passou, enviando requisição...");
+      
       const response = await fetch('/api/agents/create', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
         body: JSON.stringify(formData)
+      });
+
+      console.log("📡 DEBUG - Resposta recebida:", {
+        status: response.status,
+        statusText: response.statusText,
+        headers: response.headers
       });
 
       if (response.ok) {
         const result = await response.json();
+        console.log("✅ DEBUG - Agente criado com sucesso:", result);
         setAgents(prev => [...prev, result.agent]);
         setShowCreateModal(false);
         setFormData({ name: '', description: '', personality_id: '', custom_prompt: '', configuration: {} });
+        alert(`Agente "${result.agent.name}" criado com sucesso!`);
+      } else {
+        const errorText = await response.text();
+        console.error("❌ DEBUG - Erro na resposta:", {
+          status: response.status,
+          statusText: response.statusText,
+          errorText: errorText
+        });
+        alert(`Erro ao criar agente: ${response.status} - ${errorText}`);
       }
-    } catch (error) {
-      console.error('Erro ao criar agente:', error);
+    } catch (error: any) {
+      console.error('❌ DEBUG - Erro ao criar agente:', error);
+      alert(`Erro de conexão: ${error.message}`);
     }
   };
 
@@ -250,49 +316,10 @@ const CustomAgents: React.FC = () => {
       setWhatsappStatus(prev => ({ ...prev, [agent.id]: 'connecting' }));
       setShowWhatsAppModal(true);
       
-      // Usar nova API que funciona 100%
-      const response = await fetch(`/api/qr-code-real/${agent.id}`, {
-        method: 'GET',
-        headers: { 'Content-Type': 'application/json' }
-      });
-
-      const result = await response.json();
+      // Não fazer mais requisições diretas aqui, deixar o componente WhatsAppQRCode lidar com isso
       
-      if (result.success) {
-        console.log('✅ QR Code gerado com sucesso!', result);
-        setQrCodeUrl(result.qrcode);
-        
-        // Iniciar verificação real do status (polling)
-        const checkConnection = setInterval(async () => {
-          try {
-            const statusResponse = await fetch(`/api/evolution/status/${agent.id}`);
-            const statusResult = await statusResponse.json();
-            
-            if (statusResult.connected) {
-              setWhatsappStatus(prev => ({ ...prev, [agent.id]: 'connected' }));
-              alert('🎉 WhatsApp conectado com sucesso!');
-              setShowWhatsAppModal(false);
-              clearInterval(checkConnection);
-            }
-          } catch (error) {
-            console.error('Erro verificando status:', error);
-          }
-        }, 3000); // Verificar a cada 3 segundos
-        
-        // Limpar verificação após 2 minutos
-        setTimeout(() => {
-          clearInterval(checkConnection);
-        }, 120000);
-        
-      } else {
-        console.error('❌ Erro ao gerar QR Code:', result.error);
-        alert(`Erro ao gerar QR Code: ${result.error || 'Erro desconhecido'}`);
-        setWhatsappStatus(prev => ({ ...prev, [agent.id]: 'disconnected' }));
-        setShowWhatsAppModal(false);
-      }
     } catch (error) {
       console.error('❌ Erro ao conectar WhatsApp:', error);
-      alert('Erro ao conectar WhatsApp. Verifique sua conexão.');
       setWhatsappStatus(prev => ({ ...prev, [agent.id]: 'disconnected' }));
       setShowWhatsAppModal(false);
     }
@@ -738,7 +765,7 @@ const CustomAgents: React.FC = () => {
               <div className="flex justify-between items-center mb-4">
                 <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
                   <QrCode className="w-6 h-6 text-green-600" />
-                  Conectar WhatsApp
+                  Conectar WhatsApp - {selectedAgent.name}
                 </h2>
                 <button
                   onClick={() => {
@@ -752,81 +779,14 @@ const CustomAgents: React.FC = () => {
                 </button>
               </div>
 
-              <div className="text-center">
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                  {selectedAgent.name}
-                </h3>
-                <p className="text-sm text-gray-600 mb-6">
-                  Escaneie o QR Code com o WhatsApp do seu celular
-                </p>
-
-                {qrCodeUrl ? (
-                  <div className="bg-white p-4 rounded-lg border border-gray-200 mb-4">
-                    <img 
-                      src={qrCodeUrl} 
-                      alt="QR Code WhatsApp"
-                      className="w-64 h-64 mx-auto border rounded-lg"
-                    />
-                    <p className="text-xs text-gray-500 mt-2">
-                      QR Code gerado - pronto para escaneamento
-                    </p>
-                  </div>
-                ) : (
-                  <div className="w-64 h-64 mx-auto bg-gray-100 rounded-lg flex items-center justify-center mb-4">
-                    <div className="text-center">
-                      <div className="w-8 h-8 border-2 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
-                      <p className="text-sm text-gray-600">Gerando QR Code...</p>
-                    </div>
-                  </div>
-                )}
-
-                <div className="space-y-2 text-sm text-gray-600 mb-4">
-                  <p className="font-medium text-gray-800">📱 Como conectar:</p>
-                  <ol className="text-left space-y-1 bg-gray-50 p-3 rounded-lg">
-                    <li>1. Abra o <strong>WhatsApp</strong> no seu celular</li>
-                    <li>2. Toque nos <strong>3 pontos</strong> → <strong>Aparelhos conectados</strong></li>
-                    <li>3. Toque em <strong>"Conectar um aparelho"</strong></li>
-                    <li>4. Escaneie o QR Code acima</li>
-                    <li>5. Aguarde a confirmação automática</li>
-                  </ol>
-                </div>
-
-                <div className="space-y-3">
-                  <div className="p-3 bg-blue-50 rounded-lg">
-                    <div className="flex items-center justify-center gap-2 text-blue-600">
-                      <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
-                      <span className="text-sm font-medium">Aguardando escaneamento...</span>
-                    </div>
-                  </div>
-
-                  {/* Botão para testar conexão (desenvolvimento) */}
-                  <button
-                    onClick={async () => {
-                      try {
-                        const response = await fetch(`/api/evolution/confirm-qr/${selectedAgent.id}`, {
-                          method: 'POST',
-                          headers: { 'Content-Type': 'application/json' }
-                        });
-                        const result = await response.json();
-                        if (result.success) {
-                          setWhatsappStatus(prev => ({ ...prev, [selectedAgent.id]: 'connected' }));
-                          alert('🎉 WhatsApp conectado com sucesso! (Simulação de teste)');
-                          setShowWhatsAppModal(false);
-                        }
-                      } catch (error) {
-                        console.error('Erro na simulação:', error);
-                      }
-                    }}
-                    className="w-full px-4 py-2 text-sm bg-green-50 text-green-600 rounded-lg hover:bg-green-100 border border-green-200"
-                  >
-                    🧪 Simular Conexão (Teste)
-                  </button>
-
-                  <p className="text-xs text-gray-500">
-                    Use o botão de teste acima se estiver testando o sistema
-                  </p>
-                </div>
-              </div>
+              {/* Usar o componente WhatsAppQRCode atualizado */}
+              <WhatsAppQRCode 
+                onConnected={() => {
+                  setWhatsappStatus(prev => ({ ...prev, [selectedAgent.id]: 'connected' }));
+                  setShowWhatsAppModal(false);
+                  setQrCodeUrl('');
+                }}
+              />
             </div>
           </div>
         </div>
