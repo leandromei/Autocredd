@@ -1,32 +1,25 @@
 [variables]
+PORT = "8000"
+NIXPACKS_PYTHON_VERSION = "3.11"
 NODE_VERSION = "18"
-PYTHON_VERSION = "3.11"
 
 [phases.setup]
 nixPkgs = ["python311", "nodejs-18_x", "npm"]
 
 [phases.install]
 cmds = [
-  "echo '📦 Instalando dependências Python...'",
+  "echo '📦 Installing Python dependencies...'",
   "pip install -r requirements.txt",
-  "echo '📦 Instalando dependências Node.js...'",
-  "cd frontend_bolt && npm install",
-  "echo '✅ Dependências instaladas!'"
+  "echo '📦 Installing Node.js dependencies...'",
+  "cd frontend_bolt && npm ci",
+  "echo '✅ All dependencies installed!'"
 ]
 
 [phases.build]
 cmds = [
-  "echo '🎨 Instalando dependências do frontend...'",
-  "cd frontend_bolt && npm ci --only=production",
-  "echo '🔨 Buildando frontend React...'",
-  "cd frontend_bolt && npm run build",
-  "echo '📁 Criando diretório static...'",
-  "mkdir -p static",
-  "echo '📋 Copiando arquivos buildados...'",
-  "cp -r frontend_bolt/dist/* static/",
-  "echo '✅ Build concluído!'",
-  "ls -la static/"
+  "chmod +x build_frontend.sh",
+  "./build_frontend.sh"
 ]
 
 [start]
-cmd = "uvicorn main:app --host 0.0.0.0 --port $PORT" 
+cmd = "python main.py" 

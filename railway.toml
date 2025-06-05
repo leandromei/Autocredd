@@ -1,13 +1,12 @@
 [build]
 builder = "nixpacks"
+buildCommand = "echo 'Using nixpacks for build'"
 
 [deploy]
 startCommand = "python main.py"
 healthcheckPath = "/api/health"
-healthcheckTimeout = 300
-restartPolicyType = "always"
+healthcheckTimeout = 30
+restartPolicyType = "on_failure"
 
-[variables]
-ENVIRONMENT = "railway"
-NODE_VERSION = "18"
-PORT = "8000" 
+[environments.production]
+variables = { PORT = "8000", ENVIRONMENT = "production" } 
