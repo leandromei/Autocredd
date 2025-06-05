@@ -3,13 +3,13 @@
 Backend simplificado para AutoCred - Compatível com Railway
 """
 
-from fastapi import FastAPI, HTTPException, Depends, Form, UploadFile, File, Request
+from fastapi import FastAPI, HTTPException, Depends, Request, UploadFile, File, Form
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
-    import uvicorn
+import uvicorn
 from typing import Dict, Any, Optional, List
 import hashlib
 import uuid
