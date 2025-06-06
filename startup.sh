@@ -1,6 +1,6 @@
 #!/bin/bash
 
-echo "🚀 Starting AutoCred System..."
+echo "🚀 Starting AutoCred System (Simple Version)..."
 echo "📧 Login: admin@autocred.com"
 echo "🔑 Password: admin123"
 echo "🌍 Environment: Railway Production"
@@ -14,5 +14,5 @@ export PORT=${PORT:-8000}
 
 echo "🌐 Starting server on port $PORT..."
 
-# Start the application with uvicorn for Railway compatibility
-uvicorn main:app --host 0.0.0.0 --port $PORT 
+# Start the simple application for Railway compatibility
+uvicorn simple_app:app --host 0.0.0.0 --port $PORT 

@@ -3,4 +3,4 @@ builder = "dockerfile"
 
 [deploy]
 restartPolicyType = "on_failure"
-startCommand = "uvicorn main:app --host 0.0.0.0 --port $PORT" 
+startCommand = "uvicorn simple_app:app --host 0.0.0.0 --port $PORT" 
