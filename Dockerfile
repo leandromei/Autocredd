@@ -1,16 +1,18 @@
-# Use Python 3.11 slim image
+# Use Python 3.11
 FROM python:3.11-slim
 
 # Set working directory
 WORKDIR /app
 
-# Copy requirements first for better caching
-COPY requirements.txt .
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    && rm -rf /var/lib/apt/lists/*
 
-# Install Python dependencies
+# Copy requirements and install Python dependencies
+COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy all application files (frontend já está buildado localmente)
+# Copy application code
 COPY . .
 
 # Set environment variables
@@ -20,5 +22,5 @@ ENV ENVIRONMENT=railway
 # Expose port
 EXPOSE 8000
 
-# Start command
-CMD ["python", "simple_app.py"] 
+# Start command - usar app real
+CMD ["python", "app_real.py"] 
