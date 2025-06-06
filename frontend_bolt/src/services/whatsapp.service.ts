@@ -3,6 +3,9 @@ import axios from 'axios';
 const API_KEY = 'B6D711FCDE4D4FD5936544120E713C37';
 const REAL_INSTANCE_NAME = 'whatsapptestev4'; // Nova instância funcionando com WhatsApp Web atualizado
 
+// URL do backend Railway
+const BACKEND_URL = 'https://autocredd-production.up.railway.app';
+
 export interface WhatsAppInstance {
   instance: {
     instanceName: string;
@@ -37,39 +40,8 @@ export class WhatsAppService {
 
   private setupWebSocket(instanceName: string, onQRCode: (qrCode: string) => void) {
     try {
-      // Tentar conectar via WebSocket para eventos em tempo real
-      const wsUrl = `ws://localhost:8081/websocket?apikey=${API_KEY}`;
-      console.log('🔌 Connecting to WebSocket:', wsUrl);
-      
-      this.websocket = new WebSocket(wsUrl);
-      
-      this.websocket.onopen = () => {
-        console.log('✅ WebSocket connected for QR code events');
-      };
-      
-      this.websocket.onmessage = (event) => {
-        try {
-          const data = JSON.parse(event.data);
-          console.log('📨 WebSocket message received:', data);
-          
-          // Procurar por eventos de QR code
-          if (data.instance === instanceName && data.data?.qrcode) {
-            console.log('🎯 QR Code event received!');
-            onQRCode(data.data.qrcode);
-          }
-        } catch (error) {
-          console.error('❌ Error parsing WebSocket message:', error);
-        }
-      };
-      
-      this.websocket.onerror = (error) => {
-        console.error('❌ WebSocket error:', error);
-      };
-      
-      this.websocket.onclose = () => {
-        console.log('📴 WebSocket connection closed');
-      };
-      
+      // WebSocket não disponível no Railway simples - usar polling
+      console.log('📡 WebSocket not available in Railway simple mode - using polling');
     } catch (error) {
       console.error('❌ Failed to setup WebSocket:', error);
     }
@@ -77,11 +49,11 @@ export class WhatsAppService {
 
   private async request(method: string, endpoint: string, data?: any) {
     try {
-      console.log(`🔗 Making ${method} request to: /api/evolution${endpoint}`);
+      console.log(`🔗 Making ${method} request to: ${BACKEND_URL}/api/evolution${endpoint}`);
       
       const config = {
         method,
-        url: `/api/evolution${endpoint}`,
+        url: `${BACKEND_URL}/api/evolution${endpoint}`,
         headers: {
           'Content-Type': 'application/json'
         },
@@ -97,8 +69,6 @@ export class WhatsAppService {
       throw error;
     }
   }
-
-
 
   async getInstanceStatus(instanceName?: string) {
     try {
