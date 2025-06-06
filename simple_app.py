@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-�� AutoCred Railway - Backend + Frontend Integrado
+🚀 AutoCred Railway - Backend + Frontend Integrado
 """
 
 from fastapi import FastAPI
@@ -27,25 +27,45 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Configurar diretório do frontend
-FRONTEND_DIR = Path("frontend_bolt/dist")
+# Configurar diretório do frontend - múltiplas tentativas
+POSSIBLE_FRONTEND_DIRS = [
+    Path("frontend_bolt/dist"),
+    Path("./frontend_bolt/dist"),
+    Path("/app/frontend_bolt/dist"),
+    Path("dist"),
+    Path("./dist")
+]
 
-# Servir arquivos estáticos do frontend
-if FRONTEND_DIR.exists():
-    app.mount("/static", StaticFiles(directory=FRONTEND_DIR), name="static")
-    print("✅ Frontend estático configurado")
+FRONTEND_DIR = None
+for dir_path in POSSIBLE_FRONTEND_DIRS:
+    if dir_path.exists() and (dir_path / "index.html").exists():
+        FRONTEND_DIR = dir_path
+        print(f"✅ Frontend encontrado em: {dir_path}")
+        break
+
+if FRONTEND_DIR:
+    try:
+        app.mount("/assets", StaticFiles(directory=FRONTEND_DIR / "assets"), name="assets")
+        print(f"✅ Arquivos estáticos configurados: {FRONTEND_DIR}")
+    except Exception as e:
+        print(f"⚠️ Erro ao configurar arquivos estáticos: {e}")
+        FRONTEND_DIR = None
 else:
-    print("⚠️  Diretório do frontend não encontrado")
+    print("❌ Nenhum diretório de frontend encontrado nos caminhos:")
+    for dir_path in POSSIBLE_FRONTEND_DIRS:
+        print(f"   - {dir_path} (existe: {dir_path.exists()})")
 
 # === ROTAS DE API ===
 
 @app.get("/")
 async def root():
     # Servir o index.html do frontend se existir
-    if FRONTEND_DIR.exists() and (FRONTEND_DIR / "index.html").exists():
+    if FRONTEND_DIR and (FRONTEND_DIR / "index.html").exists():
+        print(f"🎯 Servindo frontend de: {FRONTEND_DIR / 'index.html'}")
         return FileResponse(FRONTEND_DIR / "index.html")
     else:
-        return {"message": "AutoCred Railway Complete!", "status": "success"}
+        print("📄 Servindo fallback JSON (frontend não encontrado)")
+        return {"message": "AutoCred Railway - Frontend não carregado", "status": "backend_only"}
 
 @app.get("/health")
 async def health():
@@ -57,7 +77,8 @@ async def get_environment():
         "environment": "railway",
         "status": "active",
         "message": "Backend funcionando perfeitamente!",
-        "frontend": "integrated" if FRONTEND_DIR.exists() else "not_found"
+        "frontend": "loaded" if FRONTEND_DIR else "not_found",
+        "frontend_path": str(FRONTEND_DIR) if FRONTEND_DIR else "none"
     }
 
 @app.post("/api/evolution/instance/create")
@@ -90,7 +111,7 @@ async def serve_frontend(path: str):
     """
     Serve frontend files for SPA routing
     """
-    if FRONTEND_DIR.exists():
+    if FRONTEND_DIR:
         file_path = FRONTEND_DIR / path
         
         # Se o arquivo existe, serve ele
@@ -104,14 +125,14 @@ async def serve_frontend(path: str):
     # Fallback para API não encontrada
     return JSONResponse(
         status_code=404,
-        content={"detail": "Página não encontrada"}
+        content={"detail": f"Página não encontrada: {path}", "frontend_available": FRONTEND_DIR is not None}
     )
 
 if __name__ == "__main__":
     port = int(os.getenv("PORT", 8000))
     print(f"🚀 Starting AutoCred Complete on port {port}")
     print(f"📁 Frontend directory: {FRONTEND_DIR}")
-    print(f"🌐 Full stack application ready!")
+    print(f"🌐 Frontend status: {'✅ Loaded' if FRONTEND_DIR else '❌ Not found'}")
     
     uvicorn.run(
         "simple_app:app",
