@@ -77,6 +77,8 @@ WEBHOOK_URL = get_webhook_url()
 print(f"🌍 Ambiente detectado: {ENVIRONMENT}")
 print(f"🔗 Webhook URL: {WEBHOOK_URL}")
 print(f"🚀 Porta: {PORT}")
+print("🔄 Railway Force Redeploy - Fix Instance Creation")
+print("🔄 Railway Auto-Deploy: v2.2 - FORCE REDEPLOY")
 
 # Evolution API Configuration
 EVOLUTION_API_URL = os.getenv("EVOLUTION_API_URL", "http://localhost:8081")
