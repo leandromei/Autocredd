@@ -13,8 +13,8 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy all application files
 COPY . .
 
-# Make startup script executable
-RUN chmod +x startup.sh
+# Set environment for Railway
+ENV ENVIRONMENT=railway
 
 # Expose port
 EXPOSE 8000
@@ -22,5 +22,5 @@ EXPOSE 8000
 # Set environment variables
 ENV PYTHONUNBUFFERED=1
 
-# Start command
-CMD ["./startup.sh"] 
+# Start command - run Python directly
+CMD ["python", "simple_app.py"] 
