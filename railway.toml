@@ -2,5 +2,4 @@
 builder = "dockerfile"
 
 [deploy]
-restartPolicyType = "on_failure"
-startCommand = "python main.py" 
+restartPolicyType = "on_failure" 

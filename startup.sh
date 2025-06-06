@@ -14,5 +14,5 @@ export PORT=${PORT:-8000}
 
 echo "🌐 Starting server on port $PORT..."
 
-# Start the application
-python main.py 
+# Start the application with uvicorn for Railway compatibility
+uvicorn main:app --host 0.0.0.0 --port $PORT 
