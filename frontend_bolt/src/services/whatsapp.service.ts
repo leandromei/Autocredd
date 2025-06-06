@@ -3,8 +3,8 @@ import axios from 'axios';
 const API_KEY = 'B6D711FCDE4D4FD5936544120E713C37';
 const REAL_INSTANCE_NAME = 'whatsapptestev4'; // Nova instância funcionando com WhatsApp Web atualizado
 
-// URL do backend Railway
-const BACKEND_URL = 'https://autocredd-production.up.railway.app';
+// Como frontend e backend estarão no mesmo domínio Railway, usar URLs relativas
+const BACKEND_URL = ''; // URL relativa - mesmo domínio
 
 export interface WhatsAppInstance {
   instance: {
@@ -49,11 +49,12 @@ export class WhatsAppService {
 
   private async request(method: string, endpoint: string, data?: any) {
     try {
-      console.log(`🔗 Making ${method} request to: ${BACKEND_URL}/api/evolution${endpoint}`);
+      const url = `${BACKEND_URL}/api/evolution${endpoint}`;
+      console.log(`🔗 Making ${method} request to: ${url}`);
       
       const config = {
         method,
-        url: `${BACKEND_URL}/api/evolution${endpoint}`,
+        url,
         headers: {
           'Content-Type': 'application/json'
         },
