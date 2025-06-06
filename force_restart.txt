@@ -1,2 +1,6 @@
 # Força restart - ${new Date().toISOString()}
 Sistema atualizado em: 18/01/2025 às 15:30 
+
+RAILWAY FORCE DEPLOY - CRITICAL STARTUP FIX
+Version: 3.0 - Timestamp: $(date)
+CONFIG: Using uvicorn directly for Railway compatibility 

@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 """
-Backend simplificado para AutoCred - Compatível com Railway
+🚀 AutoCred - Sistema Completo de Gestão de Crédito
+🔧 FORCE DEPLOY v3.0 - RAILWAY CRITICAL FIX
+📧 Login: admin@autocred.com | 🔑 Senha: admin123
 """
 
 from fastapi import FastAPI, HTTPException, Depends, Request, UploadFile, File, Form
