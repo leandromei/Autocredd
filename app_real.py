@@ -685,6 +685,51 @@ async def test_simple():
         ]
     }
 
+@app.get("/api/evolution/whatsapp-completo/{instance_name}")
+async def whatsapp_completo(instance_name: str):
+    """🎯 WHATSAPP COMPLETO: Cria instância + QR Code em um só endpoint"""
+    
+    resultado = {
+        "success": True,
+        "instance_name": instance_name,
+        "step1_create": None,
+        "step2_qr": None,
+        "whatsapp_ready": False
+    }
+    
+    # PASSO 1: Criar instância
+    if BACKUP_API_AVAILABLE:
+        try:
+            create_result = backup_api.create_instance(instance_name)
+            resultado["step1_create"] = {
+                "success": True,
+                "message": f"✅ Instância {instance_name} criada",
+                "data": create_result
+            }
+        except Exception as e:
+            resultado["step1_create"] = {"success": False, "error": str(e)}
+            return resultado
+    
+    # PASSO 2: Gerar QR Code
+    if BACKUP_API_AVAILABLE:
+        try:
+            qr_result = backup_api.generate_qr_code(instance_name)
+            resultado["step2_qr"] = {
+                "success": True,
+                "message": "📱 QR Code gerado para WhatsApp",
+                "qr_code": qr_result["data"]["qrcode"],
+                "qr_image_url": qr_result["data"]["qr_image_url"],
+                "instructions": qr_result["instructions"]
+            }
+            resultado["whatsapp_ready"] = True
+        except Exception as e:
+            resultado["step2_qr"] = {"success": False, "error": str(e)}
+    
+    resultado["final_message"] = "🎉 WhatsApp pronto! Escaneie o QR Code com seu celular"
+    resultado["backup_mode"] = True
+    
+    return resultado
+
 if __name__ == "__main__":
     port = int(os.getenv("PORT", 8000))
     print(f"🚀 AutoCred REAL System - SEM simulações")

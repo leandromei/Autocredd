@@ -11,8 +11,8 @@ from typing import Dict, Any, Optional
 import logging
 
 # Configuração - Evolution API PRÓPRIA (WhatsApp Web REAL) - SEM SIMULAÇÃO
-EVOLUTION_API_URL = os.getenv("EVOLUTION_API_URL", "https://autocred-evolution.up.railway.app")
-EVOLUTION_API_KEY = os.getenv("EVOLUTION_API_KEY", "autocred-evolution-key-2024")
+EVOLUTION_API_URL = os.getenv("EVOLUTION_API_URL", "https://evo-demo.hockeydev.com.br")
+EVOLUTION_API_KEY = os.getenv("EVOLUTION_API_KEY", "demo-evolution-key")
 RAILWAY_PUBLIC_DOMAIN = os.getenv("RAILWAY_PUBLIC_DOMAIN", "autocredd-production.up.railway.app")
 
 # URLs de servidores Evolution API CONFIRMADOS E FUNCIONANDO
