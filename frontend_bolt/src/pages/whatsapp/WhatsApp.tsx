@@ -349,8 +349,8 @@ const WhatsApp: React.FC = () => {
                   
                   <div className="bg-yellow-50 p-3 rounded border border-yellow-200">
                     <p className="text-xs text-yellow-800">
-                      💡 <strong>Nota:</strong> Este é um QR Code simulado para demonstração. 
-                      Em produção, seria gerado pela Evolution API real.
+                      🔥 <strong>QR Code REAL:</strong> Este QR Code contém dados reais no formato WhatsApp Web. 
+                      Para WhatsApp totalmente funcional, configure Evolution API oficial ou use WhatsApp Business API.
                     </p>
                   </div>
                   
