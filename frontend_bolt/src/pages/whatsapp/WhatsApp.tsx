@@ -326,15 +326,47 @@ const WhatsApp: React.FC = () => {
             
             <div className="text-center">
               {qrCode ? (
-                <div>
-                  <img src={qrCode} alt="QR Code" className="mx-auto mb-4 border rounded-lg" />
-                  <p className="text-sm text-gray-600">
-                    Escaneie este QR Code com o WhatsApp para conectar
-                  </p>
+                <div className="space-y-4">
+                  <div className="bg-gray-50 p-4 rounded-lg">
+                    <img 
+                      src={qrCode} 
+                      alt="QR Code WhatsApp" 
+                      className="mx-auto border rounded-lg bg-white p-2"
+                      style={{ width: '200px', height: '200px' }}
+                    />
+                  </div>
+                  
+                  <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                    <h3 className="font-semibold text-blue-800 mb-2">📋 Como conectar:</h3>
+                    <ol className="text-sm text-blue-700 text-left space-y-1">
+                      <li>1. Abra o WhatsApp no seu celular</li>
+                      <li>2. Vá em <strong>Configurações → Aparelhos conectados</strong></li>
+                      <li>3. Toque em <strong>"Conectar um aparelho"</strong></li>
+                      <li>4. Escaneie este QR Code</li>
+                      <li>5. Aguarde a conexão ser estabelecida</li>
+                    </ol>
+                  </div>
+                  
+                  <div className="bg-yellow-50 p-3 rounded border border-yellow-200">
+                    <p className="text-xs text-yellow-800">
+                      💡 <strong>Nota:</strong> Este é um QR Code simulado para demonstração. 
+                      Em produção, seria gerado pela Evolution API real.
+                    </p>
+                  </div>
+                  
+                  <button
+                    onClick={() => setShowQrCode(false)}
+                    className="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600"
+                  >
+                    Fechar QR Code
+                  </button>
                 </div>
               ) : (
-                <div className="flex items-center justify-center h-32">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600"></div>
+                <div className="space-y-3">
+                  <div className="flex items-center justify-center h-32">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600"></div>
+                  </div>
+                  <p className="text-sm text-gray-600">Gerando QR Code...</p>
                 </div>
               )}
             </div>
