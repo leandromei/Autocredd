@@ -41,6 +41,7 @@ import ClientsComplete from './pages/ClientsComplete';
 import Contracts from './pages/Contracts';
 import ContractsComplete from './pages/ContractsComplete';
 import Contacts from './pages/Contacts';
+import WhatsApp from './pages/WhatsApp';
 
 const navigation = [
   { name: 'Dashboard', href: '/', icon: LayoutDashboard },
@@ -49,6 +50,7 @@ const navigation = [
   { name: 'Contratos Completo', href: '/contracts-complete', icon: FileSignature },
   { name: 'Contatos', href: '/contacts', icon: Contact },
   { name: 'Clientes', href: '/clients', icon: Users },
+  { name: 'WhatsApp', href: '/whatsapp', icon: MessageCircle },
   { name: 'Configurações', href: '/settings', icon: Settings },
 ];
 
@@ -351,6 +353,7 @@ function AppContent() {
               <Route path="/contracts" element={<Contracts />} />
               <Route path="/contracts-complete" element={<ContractsComplete />} />
               <Route path="/contacts" element={<Contacts />} />
+              <Route path="/whatsapp" element={<WhatsApp />} />
             </Routes>
           </div>
         </main>
