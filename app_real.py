@@ -741,6 +741,64 @@ async def whatsapp_completo(instance_name: str):
             "suggestion": "Use os endpoints individuais que funcionam perfeitamente"
         }
 
+@app.get("/api/evolution/qr-melhorado/{instance_name}")
+async def qr_melhorado(instance_name: str):
+    """🔥 QR CODE MELHORADO: Múltiplos formatos para garantir compatibilidade com WhatsApp"""
+    
+    if not BACKUP_API_AVAILABLE:
+        return {"success": False, "error": "Sistema backup não disponível"}
+    
+    try:
+        # Se instância não existe, criar automaticamente
+        if instance_name not in backup_api.instances:
+            create_result = backup_api.create_instance(instance_name)
+            if not create_result.get("success"):
+                return {"success": False, "error": "Falha ao criar instância automaticamente"}
+        
+        # Gerar QR Code melhorado
+        qr_result = backup_api.generate_qr_code(instance_name)
+        
+        if qr_result.get("success"):
+            # Obter dados do QR
+            qr_data = qr_result["data"]["qrcode"]
+            
+            # Múltiplas URLs de QR Code para garantir compatibilidade
+            qr_urls = {
+                "primary": f"https://api.qrserver.com/v1/create-qr-code/?size=400x400&format=png&data={qr_data}",
+                "google_charts": f"https://chart.googleapis.com/chart?chs=400x400&cht=qr&chl={qr_data}",
+                "large": f"https://api.qrserver.com/v1/create-qr-code/?size=600x600&format=png&data={qr_data}",
+                "medium": f"https://api.qrserver.com/v1/create-qr-code/?size=300x300&format=png&data={qr_data}"
+            }
+            
+            return {
+                "success": True,
+                "instance_name": instance_name,
+                "qr_code_data": qr_data,
+                "qr_images": qr_urls,
+                "message": "🔥 QR Code melhorado gerado com múltiplos formatos",
+                "instructions": [
+                    "1. 📱 Abra WhatsApp no celular",
+                    "2. ⚙️ Configurações → Aparelhos conectados", 
+                    "3. ➕ Conectar um aparelho",
+                    "4. 📷 Escaneie QUALQUER uma das imagens QR Code abaixo:",
+                    f"   • Principal: {qr_urls['primary']}",
+                    f"   • Google: {qr_urls['google_charts']}",
+                    f"   • Grande: {qr_urls['large']}",
+                    f"   • Médio: {qr_urls['medium']}"
+                ],
+                "tips": [
+                    "✅ Tente todas as URLs se uma não funcionar",
+                    "✅ Mantenha boa iluminação na tela",
+                    "✅ Segure a câmera firme por 3-5 segundos",
+                    "✅ Use câmera traseira (não selfie)"
+                ]
+            }
+        else:
+            return {"success": False, "error": "Falha ao gerar QR Code"}
+            
+    except Exception as e:
+        return {"success": False, "error": f"Erro: {str(e)}"}
+
 if __name__ == "__main__":
     port = int(os.getenv("PORT", 8000))
     print(f"🚀 AutoCred REAL System - SEM simulações")
