@@ -56,7 +56,10 @@ app.add_middleware(
 FRONTEND_DIR = Path("frontend_bolt/dist")
 
 if FRONTEND_DIR.exists() and (FRONTEND_DIR / "index.html").exists():
+    # Montar assets (CSS e JS)
     app.mount("/assets", StaticFiles(directory=FRONTEND_DIR / "assets"), name="assets")
+    # Montar outros arquivos estáticos (vite.svg, etc.)
+    app.mount("/static", StaticFiles(directory=FRONTEND_DIR), name="static")
     print(f"✅ Frontend ORIGINAL carregado: {FRONTEND_DIR}")
 else:
     print(f"❌ Frontend original não encontrado: {FRONTEND_DIR}")
@@ -73,6 +76,14 @@ async def root():
     if FRONTEND_DIR.exists() and (FRONTEND_DIR / "index.html").exists():
         return FileResponse(FRONTEND_DIR / "index.html")
     return {"error": "Frontend original não encontrado"}
+
+@app.get("/vite.svg")
+async def vite_svg():
+    """Servir o vite.svg"""
+    vite_svg_path = FRONTEND_DIR / "vite.svg"
+    if vite_svg_path.exists():
+        return FileResponse(vite_svg_path)
+    raise HTTPException(status_code=404, detail="vite.svg não encontrado")
 
 # === API LEADS REAL ===
 @app.get("/api/leads")
@@ -208,6 +219,23 @@ async def whatsapp_webhook(data: dict):
 async def health():
     return {"status": "healthy", "version": "2.0.0"}
 
+@app.get("/api/frontend-status")
+async def frontend_status():
+    """Verificar status do frontend"""
+    frontend_exists = FRONTEND_DIR.exists()
+    index_exists = (FRONTEND_DIR / "index.html").exists()
+    assets_exists = (FRONTEND_DIR / "assets").exists()
+    vite_svg_exists = (FRONTEND_DIR / "vite.svg").exists()
+    
+    return {
+        "frontend_directory": str(FRONTEND_DIR),
+        "frontend_exists": frontend_exists,
+        "index_html_exists": index_exists,
+        "assets_directory_exists": assets_exists,
+        "vite_svg_exists": vite_svg_exists,
+        "status": "ready" if all([frontend_exists, index_exists, assets_exists]) else "not_ready"
+    }
+
 @app.get("/api/environment")
 async def get_environment():
     return {
@@ -221,9 +249,15 @@ async def get_environment():
 @app.get("/{path:path}")
 async def serve_spa(path: str):
     """Servir frontend original para SPA routing"""
+    # Excluir rotas da API
     if path.startswith("api/"):
         return JSONResponse(status_code=404, content={"detail": f"API não encontrada: /{path}"})
     
+    # Excluir arquivos estáticos que já são servidos por outras rotas
+    if path.startswith("assets/") or path.startswith("static/") or path in ["vite.svg"]:
+        raise HTTPException(status_code=404, detail="Arquivo não encontrado")
+    
+    # Para todas as outras rotas, servir o index.html (SPA routing)
     if FRONTEND_DIR.exists() and (FRONTEND_DIR / "index.html").exists():
         return FileResponse(FRONTEND_DIR / "index.html")
     return {"error": "Frontend não encontrado"}

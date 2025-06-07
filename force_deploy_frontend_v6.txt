@@ -1,0 +1,25 @@
+🎯 FRONTEND FIXED - Deploy v6
+Timestamp: 2025-01-06 15:15:00
+
+PROBLEMA IDENTIFICADO E CORRIGIDO:
+❌ O .railwayignore estava ignorando frontend_bolt/ inteiro
+✅ Corrigido para manter frontend_bolt/dist/ (arquivos buildados)
+
+MUDANÇAS FEITAS:
+1. ✅ Configuração FastAPI melhorada para servir frontend
+   - Adicionado mount para /assets (CSS/JS)
+   - Adicionado mount para /static (outros arquivos)
+   - Rota específica para vite.svg
+   - SPA routing melhorado
+
+2. ✅ .railwayignore corrigido
+   - Manter frontend_bolt/dist/ (arquivos buildados)
+   - Ignorar apenas source files desnecessários
+
+3. ✅ Rotas de debug adicionadas
+   - /api/frontend-status (verificar status do frontend)
+   - /health (status da aplicação)
+
+RESULTADO ESPERADO:
+🎯 Frontend funcionando no Railway com todos os assets carregando corretamente
+🎯 Aplicação completa com WhatsApp Evolution API funcional 

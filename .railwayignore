@@ -1,4 +1,14 @@
-frontend_bolt/
+# Ignorar source do frontend, mas manter o dist buildado
+frontend_bolt/src/
+frontend_bolt/node_modules/
+frontend_bolt/public/
+frontend_bolt/*.json
+frontend_bolt/*.ts
+frontend_bolt/*.js
+frontend_bolt/.bolt/
+frontend_bolt/.gitignore
+
+# Outros arquivos desnecessários
 node_modules/
 *.log
 .git/

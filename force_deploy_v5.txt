@@ -1,0 +1,11 @@
+Force Deploy v5 - Fixed httpx import and Dockerfile configuration
+Deployment timestamp: 2025-01-06 14:54:00
+
+Changes made:
+1. Fixed Dockerfile.light to run app_real.py instead of simple_app.py
+2. Updated Procfile to use app_real:app
+3. Added pip upgrade in Dockerfile for better dependency resolution
+4. Created debug_imports.py to test all imports
+5. Verified requirements.txt has httpx==0.25.2
+
+This should resolve the ModuleNotFoundError for httpx. 
