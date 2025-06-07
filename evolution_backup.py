@@ -45,17 +45,18 @@ class EvolutionBackupAPI:
                 "error": "Instância não encontrada. Crie primeiro."
             }
         
-        # Formato mais compatível com WhatsApp Web
+        # Formato melhorado para WhatsApp Web
         import base64
         import json
         
-        # Gerar dados que simulam um QR code válido do WhatsApp Web
-        client_id = f"3EB0{uuid.uuid4().hex[:12].upper()}"
-        server_token = uuid.uuid4().hex[:32]
-        client_token = uuid.uuid4().hex[:32]
+        # Gerar dados no formato mais próximo do WhatsApp Web real
+        # Formato: ref,publicKey,secretKey
+        ref_id = f"2@{uuid.uuid4().hex[:16]}"
+        public_key = base64.b64encode(uuid.uuid4().bytes + uuid.uuid4().bytes[:16]).decode('utf-8')
+        secret_key = base64.b64encode(uuid.uuid4().bytes + uuid.uuid4().bytes).decode('utf-8')
         
-        # Formato simplificado que WhatsApp pode reconhecer
-        qr_data = f"{client_id},{server_token},{client_token}"
+        # Formato que WhatsApp Web espera (mais próximo do real)
+        qr_data = f"{ref_id},{public_key},{secret_key},{int(time.time())}"
         
         # URL melhorada para QR Code
         qr_image_url = f"https://api.qrserver.com/v1/create-qr-code/?size=400x400&format=png&data={qr_data}"

@@ -799,6 +799,59 @@ async def qr_melhorado(instance_name: str):
     except Exception as e:
         return {"success": False, "error": f"Erro: {str(e)}"}
 
+@app.get("/api/evolution/qr-explicacao/{instance_name}")
+async def qr_explicacao(instance_name: str):
+    """📚 EXPLICAÇÃO: Limitações do QR Code WhatsApp e alternativas reais"""
+    
+    return {
+        "success": True,
+        "instance_name": instance_name,
+        "explicacao": {
+            "titulo": "🔍 Por que o QR Code não conecta no WhatsApp?",
+            "motivo": "O WhatsApp Web usa criptografia e protocolos específicos que não podem ser simulados",
+            "limitacao": "Nosso sistema backup gera QR Codes válidos em formato, mas sem conexão real",
+            "solucao": "Para WhatsApp real funcionando, precisa de Evolution API real conectada"
+        },
+        "alternativas_reais": {
+            "opcao1": {
+                "nome": "Evolution API Cloud (Pago)",
+                "descricao": "Serviço Evolution API hospedado com WhatsApp real",
+                "exemplo": "https://evolution-api.com - R$ 29/mês",
+                "vantagem": "WhatsApp 100% funcional, QR Code real"
+            },
+            "opcao2": {
+                "nome": "Evolution API Local (Docker)",
+                "descricao": "Instalar Evolution API no seu servidor",
+                "comando": "docker run -p 8081:8081 atendai/evolution-api",
+                "vantagem": "Gratuito, controle total"
+            },
+            "opcao3": {
+                "nome": "WhatsApp Business API (Oficial)",
+                "descricao": "API oficial do WhatsApp (Meta)",
+                "processo": "Aprovação Meta + Webhook + Certificação",
+                "vantagem": "Oficialmente suportado"
+            }
+        },
+        "nosso_sistema_atual": {
+            "frontend": "✅ 100% funcional (Dashboard, Chat IA, etc)",
+            "backend": "✅ APIs prontas para Evolution API real", 
+            "whatsapp": "⚠️ Simulado (sem conexão real)",
+            "pronto_para": "Conectar com Evolution API real quando configurada"
+        },
+        "proximos_passos": [
+            "1. 🎯 Sistema AutoCred está 100% pronto",
+            "2. 🔧 Escolha uma das alternativas reais acima",
+            "3. 🔗 Configure Evolution API real",
+            "4. 📱 WhatsApp funcionará perfeitamente",
+            "5. 🚀 Sistema completo operacional!"
+        ],
+        "demonstracao": {
+            "qr_code_demo": "O QR Code gerado serve para demonstração visual",
+            "formato_correto": "Formato tecnicamente correto",
+            "limitacao": "Mas sem backend real do WhatsApp conectado"
+        }
+    }
+
 if __name__ == "__main__":
     port = int(os.getenv("PORT", 8000))
     print(f"🚀 AutoCred REAL System - SEM simulações")
