@@ -53,7 +53,7 @@ app.add_middleware(
 )
 
 # Configurar frontend ORIGINAL
-FRONTEND_DIR = Path("frontend_bolt/dist")
+FRONTEND_DIR = Path("dist_frontend")
 
 if FRONTEND_DIR.exists() and (FRONTEND_DIR / "index.html").exists():
     # Montar assets (CSS e JS)

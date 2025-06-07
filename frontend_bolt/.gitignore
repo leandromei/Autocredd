@@ -8,7 +8,7 @@ pnpm-debug.log*
 lerna-debug.log*
 
 node_modules
-dist
+# dist - COMENTADO para permitir deploy no Railway
 dist-ssr
 *.local
 .env
