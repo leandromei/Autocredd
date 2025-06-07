@@ -1057,29 +1057,26 @@ async def diagnostico_simples():
 async def send_whatsapp_message(phone: str, message: str, instance_name: str = "autocred-main"):
     """📤 Enviar mensagem via Evolution API"""
     try:
-        if EVOLUTION_HELPER_AVAILABLE:
-            # Preparar dados para envio
-            payload = {
-                "number": phone,
-                "text": message
-            }
+        # Preparar dados para envio
+        payload = {
+            "number": phone,
+            "text": message
+        }
+        
+        async with httpx.AsyncClient(timeout=30.0) as client:
+            response = await client.post(
+                f"https://autocred-evolution-api.onrender.com/message/sendText/{instance_name}",
+                json=payload,
+                headers={"Content-Type": "application/json"}
+            )
             
-            async with httpx.AsyncClient(timeout=30.0) as client:
-                response = await client.post(
-                    f"{evolution_helper.api_url}/message/sendText/{instance_name}",
-                    json=payload,
-                    headers={"Content-Type": "application/json"}
-                )
-                
-                if response.status_code == 200:
-                    logger.info(f"✅ Mensagem enviada para {phone}: {message}")
-                    return {"success": True, "message": "Mensagem enviada"}
-                else:
-                    logger.error(f"❌ Erro ao enviar mensagem: {response.status_code}")
-                    return {"success": False, "error": f"HTTP {response.status_code}"}
-        else:
-            return {"success": False, "error": "Evolution API não disponível"}
-            
+            if response.status_code == 200:
+                logger.info(f"✅ Mensagem enviada para {phone}: {message}")
+                return {"success": True, "message": "Mensagem enviada"}
+            else:
+                logger.error(f"❌ Erro ao enviar mensagem: {response.status_code}")
+                return {"success": False, "error": f"HTTP {response.status_code}"}
+        
     except Exception as e:
         logger.error(f"❌ Erro ao enviar mensagem: {e}")
         return {"success": False, "error": str(e)}
@@ -1115,13 +1112,33 @@ async def create_whatsapp_instance(request: Request):
         data = await request.json()
         instance_name = data.get("instance_name", f"autocred-{int(time.time())}")
         
-        if EVOLUTION_HELPER_AVAILABLE:
-            result = await evolution_helper.create_instance(instance_name)
-            return result
-        else:
-            return {"success": False, "error": "Evolution API não disponível"}
+        # Chamar diretamente nossa Evolution API no Render
+        async with httpx.AsyncClient(timeout=30.0) as client:
+            payload = {
+                "instanceName": instance_name,
+                "integration": "WHATSAPP-BAILEYS"
+            }
+            
+            response = await client.post(
+                "https://autocred-evolution-api.onrender.com/instance/create",
+                json=payload,
+                headers={"Content-Type": "application/json"}
+            )
+            
+            if response.status_code == 200:
+                data_response = response.json()
+                logger.info(f"✅ Instância criada: {instance_name}")
+                return {
+                    "success": True,
+                    "instance": data_response.get("instance"),
+                    "message": f"Instância {instance_name} criada com sucesso"
+                }
+            else:
+                logger.error(f"❌ Erro ao criar instância: {response.status_code}")
+                return {"success": False, "error": f"HTTP {response.status_code}"}
             
     except Exception as e:
+        logger.error(f"❌ Erro ao criar instância: {e}")
         return {"success": False, "error": str(e)}
 
 # Gerar QR Code
@@ -1129,13 +1146,29 @@ async def create_whatsapp_instance(request: Request):
 async def get_whatsapp_qrcode(instance_name: str):
     """📱 Gerar QR Code para conectar WhatsApp"""
     try:
-        if EVOLUTION_HELPER_AVAILABLE:
-            result = await evolution_helper.get_qrcode(instance_name)
-            return result
-        else:
-            return {"success": False, "error": "Evolution API não disponível"}
+        # Chamar diretamente nossa Evolution API no Render
+        async with httpx.AsyncClient(timeout=30.0) as client:
+            response = await client.get(
+                f"https://autocred-evolution-api.onrender.com/instance/qrcode/{instance_name}",
+                headers={"Content-Type": "application/json"}
+            )
             
+            if response.status_code == 200:
+                data = response.json()
+                logger.info(f"✅ QR Code gerado para {instance_name}")
+                return {
+                    "success": True,
+                    "qrcode": data.get("qrcode"),
+                    "instance": instance_name,
+                    "message": data.get("message", "QR Code gerado com sucesso"),
+                    "instructions": data.get("instructions", [])
+                }
+            else:
+                logger.error(f"❌ Erro ao gerar QR Code: {response.status_code}")
+                return {"success": False, "error": f"HTTP {response.status_code}"}
+                
     except Exception as e:
+        logger.error(f"❌ Erro ao gerar QR Code: {e}")
         return {"success": False, "error": str(e)}
 
 # Dashboard WhatsApp
@@ -1152,19 +1185,26 @@ async def whatsapp_dashboard():
             "last_activity": time.time(),
             "evolution_api": {
                 "status": "connected",
-                "url": evolution_helper.api_url if EVOLUTION_HELPER_AVAILABLE else "N/A"
+                "url": "https://autocred-evolution-api.onrender.com"
             }
         }
         
-        if EVOLUTION_HELPER_AVAILABLE:
-            # Testar conexão
-            connection_test = await evolution_helper.test_connection()
-            dashboard_data["evolution_api"]["connection_test"] = connection_test
-            
-            # Listar instâncias
-            instances_result = await evolution_helper.list_instances()
-            if instances_result.get("success"):
-                dashboard_data["total_instances"] = len(instances_result.get("instances", []))
+        # Testar conexão com nossa Evolution API
+        try:
+            async with httpx.AsyncClient(timeout=10.0) as client:
+                response = await client.get("https://autocred-evolution-api.onrender.com/health")
+                if response.status_code == 200:
+                    dashboard_data["evolution_api"]["connection_test"] = {"success": True, "status": "connected"}
+                    
+                    # Tentar listar instâncias
+                    instances_response = await client.get("https://autocred-evolution-api.onrender.com/manager/fetchInstances")
+                    if instances_response.status_code == 200:
+                        instances_data = instances_response.json()
+                        dashboard_data["total_instances"] = len(instances_data.get("instances", []))
+                else:
+                    dashboard_data["evolution_api"]["connection_test"] = {"success": False, "error": f"HTTP {response.status_code}"}
+        except:
+            dashboard_data["evolution_api"]["connection_test"] = {"success": False, "error": "Connection failed"}
         
         return dashboard_data
         
