@@ -10,19 +10,18 @@ import asyncio
 from typing import Dict, Any, Optional
 import logging
 
-# Configuração - Evolution API (WhatsApp Web, SEM API oficial) - SERVIDOR DEMO OFICIAL
-EVOLUTION_API_URL = os.getenv("EVOLUTION_API_URL", "https://demo.evolutionapi.com") 
-EVOLUTION_API_KEY = os.getenv("EVOLUTION_API_KEY", "demo-key")
+# Configuração - Evolution API REAL (WhatsApp Web REAL) - SEM SIMULAÇÃO
+EVOLUTION_API_URL = os.getenv("EVOLUTION_API_URL", "https://evolution.api-cloud.dev")
+EVOLUTION_API_KEY = os.getenv("EVOLUTION_API_KEY", "YOUR_SECURE_API_KEY_2024")
 RAILWAY_PUBLIC_DOMAIN = os.getenv("RAILWAY_PUBLIC_DOMAIN", "autocredd-production.up.railway.app")
 
-# URLs de servidores Evolution API disponíveis (WhatsApp Web gratuito) - TESTADOS
+# URLs de servidores Evolution API REAIS - SEM SIMULAÇÃO
 EVOLUTION_SERVERS = {
-    "official_demo": "https://demo.evolutionapi.com",
-    "codechat_demo": "https://evolution-demo.codechat.dev", 
-    "atendai_free": "https://api.atendai.com",
-    "free_instance": "https://evolution-free.herokuapp.com",
-    "local_docker": "http://localhost:8081",
-    "custom": os.getenv("EVOLUTION_API_URL", "https://demo.evolutionapi.com")
+    "evolution_cloud": "https://evolution.api-cloud.dev",
+    "atendai_cloud": "https://api.atendai.com",
+    "local_production": "http://localhost:8081",
+    "railway_evolution": f"https://evolution-{os.getenv('RAILWAY_SERVICE_NAME', 'api')}.up.railway.app",
+    "custom": os.getenv("EVOLUTION_API_URL", "https://evolution.api-cloud.dev")
 }
 
 # Setup logging

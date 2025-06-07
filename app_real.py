@@ -246,37 +246,15 @@ async def test_list_instances():
 
 @app.post("/api/evolution/test-create/{instance_name}")
 async def test_create_instance(instance_name: str):
-    """🧪 TESTE: Cria instância de teste"""
+    """🧪 REAL: Cria instância WhatsApp REAL"""
     if not EVOLUTION_HELPER_AVAILABLE:
-        # Demo funcional offline
-        return {
-            "success": True,
-            "mode": "demo",
-            "instance_name": instance_name,
-            "message": f"✅ Instância '{instance_name}' criada com sucesso (DEMO)",
-            "status": "created",
-            "next_steps": [
-                f"1. ✅ Instância '{instance_name}' configurada",
-                "2. 📱 Obtenha QR Code: GET /api/evolution/test-qr/" + instance_name,
-                "3. 📷 Escaneie com WhatsApp do celular",
-                "4. 🎉 Conexão estabelecida!"
-            ],
-            "demo_note": "Em produção, conectaria com WhatsApp real"
-        }
+        return {"success": False, "error": "Evolution Helper não disponível - configure servidor real"}
     
     try:
         result = await evolution_helper.create_instance(instance_name)
         return result
     except Exception as e:
-        # Fallback para demo se servidor externo falhar
-        return {
-            "success": True,
-            "mode": "demo_fallback", 
-            "instance_name": instance_name,
-            "message": f"✅ Instância '{instance_name}' criada (DEMO - servidor externo offline)",
-            "original_error": str(e),
-            "status": "demo_created"
-        }
+        return {"success": False, "error": f"Erro ao criar instância real: {str(e)}"}
 
 @app.get("/api/evolution/test-status/{instance_name}")
 async def test_instance_status(instance_name: str):
@@ -311,101 +289,52 @@ async def test_instance_status(instance_name: str):
 
 @app.get("/api/evolution/test-qr/{instance_name}")
 async def test_get_qr_code(instance_name: str):
-    """🧪 TESTE: Obtém QR Code de instância"""
+    """🧪 REAL: Obtém QR Code REAL para WhatsApp"""
     if not EVOLUTION_HELPER_AVAILABLE:
-        # Mock para demonstração
-        return {
-            "success": True,
-            "mode": "demo",
-            "instance_name": instance_name,
-            "qr_code": "https://chart.googleapis.com/chart?chs=200x200&cht=qr&chl=DEMO_QR_CODE_" + instance_name,
-            "qr_image_url": f"https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=WhatsApp_Demo_{instance_name}",
-            "message": "📱 QR Code gerado (DEMO) - Em produção, escaneie com WhatsApp",
-            "instructions": [
-                "1. Abra WhatsApp no seu celular",
-                "2. Vá em Configurações > Aparelhos conectados", 
-                "3. Toque em 'Conectar um aparelho'",
-                "4. Escaneie este QR Code",
-                "5. Pronto! WhatsApp conectado"
-            ],
-            "demo_note": "Este é um QR Code de demonstração. Em produção, geraria código real do WhatsApp."
-        }
+        return {"success": False, "error": "Evolution Helper não disponível - configure servidor real"}
+    
     try:
         result = await evolution_helper.get_qr_code(instance_name)
         return result
     except Exception as e:
-        # Fallback para demo se servidor externo falhar
-        return {
-            "success": True,
-            "mode": "demo_fallback",
-            "instance_name": instance_name,
-            "qr_code": f"https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=Demo_WhatsApp_{instance_name}",
-            "message": "📱 QR Code gerado (DEMO - servidor offline)",
-            "original_error": str(e),
-            "instructions": [
-                "1. Servidor Evolution API está offline",
-                "2. Este é um QR Code de demonstração",
-                "3. Em produção, conectaria WhatsApp real",
-                "4. Sistema funcionando normalmente"
-            ]
-        }
+        return {"success": False, "error": f"Erro ao obter QR Code real: {str(e)}"}
 
 @app.post("/api/evolution/auto-configure-free")
 async def auto_configure_free():
-    """🆓 AUTO-CONFIGURAÇÃO: Configura automaticamente com servidor gratuito"""
+    """🔧 REAL: Configura servidor Evolution API REAL para WhatsApp"""
     if not EVOLUTION_HELPER_AVAILABLE:
-        # Mock para demonstração
-        return {
-            "success": True,
-            "message": "✅ Configurado automaticamente (DEMO MODE)",
-            "server": "demo_mode",
-            "api_url": "https://demo.evolutionapi.com",
-            "type": "whatsapp_web_free",
-            "mode": "demo",
-            "connection_test": {
-                "success": True,
-                "status": "online",
-                "message": "Demo mode - funcionando para demonstração"
-            },
-            "next_steps": [
-                "1. ✅ Servidor configurado automaticamente (DEMO)",
-                "2. 📱 Crie um agente: POST /api/evolution/test-create/meu_agente",
-                "3. 📲 Obtenha QR Code: GET /api/evolution/test-qr/meu_agente", 
-                "4. 📷 Escaneie QR Code com WhatsApp do celular",
-                "5. 🎉 WhatsApp conectado e funcionando!"
-            ]
-        }
+        return {"success": False, "error": "Evolution Helper não disponível - configure servidor real"}
     
     try:
-        # Tentar servidores gratuitos em ordem de prioridade (TESTADOS)
-        servers_to_try = ["official_demo", "codechat_demo", "atendai_free"]
+        # Tentar servidores REAIS em ordem de prioridade
+        servers_to_try = ["evolution_cloud", "atendai_cloud", "local_production"]
         
         for server in servers_to_try:
-            result = evolution_helper.configure_evolution_server(server, "demo-api-key")
+            result = evolution_helper.configure_evolution_server(server, "YOUR_SECURE_API_KEY_2024")
             test_result = await evolution_helper.test_connection()
             
             if test_result.get("success"):
                 return {
                     "success": True,
-                    "message": f"✅ Configurado automaticamente com {server}",
+                    "message": f"✅ Configurado com servidor REAL: {server}",
                     "server": server,
                     "api_url": evolution_helper.api_url,
-                    "type": "whatsapp_web_free",
+                    "type": "whatsapp_web_real",
                     "connection_test": test_result,
                     "next_steps": [
-                        "1. ✅ Servidor configurado automaticamente",
-                        "2. 📱 Crie um agente: POST /api/evolution/test-create/meu_agente",
-                        "3. 📲 Obtenha QR Code: GET /api/evolution/test-qr/meu_agente", 
+                        "1. ✅ Servidor REAL configurado",
+                        "2. 📱 Crie instância: POST /api/evolution/test-create/meu_agente",
+                        "3. 📲 Obtenha QR Code REAL: GET /api/evolution/test-qr/meu_agente", 
                         "4. 📷 Escaneie QR Code com WhatsApp do celular",
-                        "5. 🎉 WhatsApp conectado e funcionando!"
+                        "5. 🎉 WhatsApp REAL conectado!"
                     ]
                 }
         
         # Se nenhum servidor funcionou
         return {
             "success": False,
-            "message": "❌ Nenhum servidor gratuito disponível no momento",
-            "suggestion": "Tente novamente em alguns minutos ou configure manualmente"
+            "message": "❌ Nenhum servidor Evolution API disponível",
+            "suggestion": "Configure sua própria instância Evolution API ou use servidor pago"
         }
         
     except Exception as e:
