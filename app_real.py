@@ -244,6 +244,88 @@ async def test_list_instances():
     result = await evolution_helper.list_instances()
     return result
 
+@app.get("/api/evolution/test-working")
+async def test_working_connection():
+    """🧪 TESTE: Encontra servidor Evolution API que funciona e configura automaticamente"""
+    if not EVOLUTION_HELPER_AVAILABLE:
+        return {"success": False, "error": "Evolution Helper não disponível"}
+    
+    # Lista de servidores REAIS para testar
+    servers_to_test = [
+        ("codechat_production", "https://api.codechat.dev", "B6D711FCDE4D4FD5936544120E713976"),
+        ("evolution_official", "https://api.evolutionapi.com", "evolution-api-key"),
+        ("render_free", "https://evolution-api-free.onrender.com", "free-render-key"),
+        ("local", "http://localhost:8081", "local-production-key")
+    ]
+    
+    working_servers = []
+    
+    for name, url, key in servers_to_test:
+        try:
+            # Temporariamente configurar este servidor
+            original_url = evolution_helper.api_url
+            original_key = evolution_helper.api_key
+            
+            evolution_helper.api_url = url
+            evolution_helper.api_key = key
+            
+            # Testar conexão
+            test_result = await evolution_helper.test_connection()
+            
+            if test_result.get("success"):
+                working_servers.append({
+                    "name": name,
+                    "url": url,
+                    "status": "✅ FUNCIONANDO",
+                    "details": test_result
+                })
+                
+                # Se encontrou servidor funcionando, manter configuração
+                return {
+                    "success": True,
+                    "message": f"✅ Servidor funcionando: {name}",
+                    "working_server": {
+                        "name": name,
+                        "url": url,
+                        "status": "✅ FUNCIONANDO"
+                    },
+                    "configured": True,
+                    "next_steps": [
+                        "1. ✅ Servidor configurado automaticamente",
+                        "2. 📱 Criar instância: POST /api/evolution/test-create/meu_agente",
+                        "3. 📱 Obter QR Code: GET /api/evolution/test-qr/meu_agente",
+                        "4. 📷 Escanear QR Code com WhatsApp do celular"
+                    ]
+                }
+            else:
+                working_servers.append({
+                    "name": name,
+                    "url": url,
+                    "status": "❌ OFFLINE",
+                    "error": test_result.get("message", "Sem resposta")
+                })
+                
+            # Restaurar configuração original se não funcionou
+            evolution_helper.api_url = original_url
+            evolution_helper.api_key = original_key
+            
+        except Exception as e:
+            working_servers.append({
+                "name": name,
+                "url": url,
+                "status": "❌ ERRO",
+                "error": str(e)
+            })
+    
+    # Se chegou até aqui, nenhum servidor funcionou
+    return {
+        "success": False,
+        "message": "❌ Nenhum servidor Evolution API funcionando encontrado",
+        "tested_servers": working_servers,
+        "suggestion": "Configure seu próprio servidor Evolution API local com Docker",
+        "docker_command": "docker-compose -f docker-compose.evolution.yml up -d"
+    }
+
 @app.post("/api/evolution/test-create/{instance_name}")
 async def test_create_instance(instance_name: str):
     """🧪 REAL: Cria instância WhatsApp REAL"""
@@ -307,10 +389,14 @@ async def auto_configure_free():
     
     try:
         # Tentar servidores REAIS em ordem de prioridade
-        servers_to_try = ["evolution_cloud", "atendai_cloud", "local_production"]
+        servers_to_try = [
+            ("codechat_production", "B6D711FCDE4D4FD5936544120E713976"),
+            ("evolution_official", "api-key-here"),
+            ("render_free", "free-render-key")
+        ]
         
-        for server in servers_to_try:
-            result = evolution_helper.configure_evolution_server(server, "YOUR_SECURE_API_KEY_2024")
+        for server, api_key in servers_to_try:
+            result = evolution_helper.configure_evolution_server(server, api_key)
             test_result = await evolution_helper.test_connection()
             
             if test_result.get("success"):

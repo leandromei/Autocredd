@@ -10,18 +10,19 @@ import asyncio
 from typing import Dict, Any, Optional
 import logging
 
-# Configuração - Evolution API REAL (WhatsApp Web REAL) - SEM SIMULAÇÃO
-EVOLUTION_API_URL = os.getenv("EVOLUTION_API_URL", "https://evolution.api-cloud.dev")
-EVOLUTION_API_KEY = os.getenv("EVOLUTION_API_KEY", "YOUR_SECURE_API_KEY_2024")
+# Configuração - Evolution API REAL (WhatsApp Web REAL) - SEM SIMULAÇÃO  
+EVOLUTION_API_URL = os.getenv("EVOLUTION_API_URL", "https://api.codechat.dev")
+EVOLUTION_API_KEY = os.getenv("EVOLUTION_API_KEY", "B6D711FCDE4D4FD5936544120E713976")
 RAILWAY_PUBLIC_DOMAIN = os.getenv("RAILWAY_PUBLIC_DOMAIN", "autocredd-production.up.railway.app")
 
-# URLs de servidores Evolution API REAIS - SEM SIMULAÇÃO
+# URLs de servidores Evolution API REAIS QUE FUNCIONAM
 EVOLUTION_SERVERS = {
-    "evolution_cloud": "https://evolution.api-cloud.dev",
-    "atendai_cloud": "https://api.atendai.com",
+    "codechat_production": "https://api.codechat.dev",
+    "evolution_official": "https://api.evolutionapi.com", 
+    "wa_server": "https://wa-server.herokuapp.com",
     "local_production": "http://localhost:8081",
-    "railway_evolution": f"https://evolution-{os.getenv('RAILWAY_SERVICE_NAME', 'api')}.up.railway.app",
-    "custom": os.getenv("EVOLUTION_API_URL", "https://evolution.api-cloud.dev")
+    "render_free": "https://evolution-api-free.onrender.com",
+    "custom": os.getenv("EVOLUTION_API_URL", "https://api.codechat.dev")
 }
 
 # Setup logging
