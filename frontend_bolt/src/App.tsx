@@ -29,6 +29,7 @@ import WhatsAppProspecting from './pages/prospecting/WhatsApp';
 
 // WhatsApp Connection
 import WhatsAppConnection from './pages/WhatsAppConnection';
+import WhatsApp from './pages/whatsapp/WhatsApp';
 
 // Auth Pages
 import Login from './pages/auth/Login';
@@ -82,6 +83,7 @@ function App() {
                   
                   {/* WhatsApp Connection */}
                   <Route path="/whatsapp/connection" element={<WhatsAppConnection />} />
+                  <Route path="/whatsapp" element={<WhatsApp />} />
                 </Routes>
               </Layout>
             </div>
