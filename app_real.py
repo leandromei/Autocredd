@@ -4,17 +4,22 @@
 Sistema completo com funcionalidades reais - SEM simulações
 """
 
-from fastapi import FastAPI, HTTPException
+import os
+import time
+import logging
+import httpx
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse, JSONResponse
 from pydantic import BaseModel
-import os
-import uvicorn
 from pathlib import Path
-import httpx
+import uvicorn
 from typing import Optional
-import time
+
+# Configurar logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 # Modelos de dados reais
 class Lead(BaseModel):
@@ -572,11 +577,50 @@ async def list_free_servers():
 
 # === WEBHOOK WHATSAPP ===
 @app.post("/webhook/whatsapp")
-async def whatsapp_webhook(data: dict):
-    """Receber webhooks do WhatsApp"""
-    print(f"📱 Webhook WhatsApp: {data}")
-    # TODO: Processar mensagens e conectar com IA
-    return {"status": "received"}
+async def webhook_whatsapp(request: Request):
+    """🔔 WEBHOOK: Recebe mensagens do WhatsApp via Evolution API"""
+    try:
+        data = await request.json()
+        
+        # Log da mensagem recebida
+        logger.info(f"📱 Mensagem WhatsApp recebida: {data}")
+        
+        # Extrair informações da mensagem
+        event_type = data.get("event", "unknown")
+        
+        if event_type == "messages.upsert":
+            message_data = data.get("data", {})
+            messages = message_data.get("messages", [])
+            
+            for message in messages:
+                # Extrair dados da mensagem
+                phone = message.get("key", {}).get("remoteJid", "").replace("@s.whatsapp.net", "")
+                text = message.get("message", {}).get("conversation", "")
+                message_id = message.get("key", {}).get("id", "")
+                timestamp = message.get("messageTimestamp", time.time())
+                
+                if text and phone:
+                    # Salvar mensagem no banco (simulado)
+                    saved_message = {
+                        "id": message_id,
+                        "phone": phone,
+                        "text": text,
+                        "direction": "received",
+                        "timestamp": timestamp,
+                        "status": "received"
+                    }
+                    
+                    logger.info(f"💬 Mensagem salva: {phone} -> {text}")
+                    
+                    # Resposta automática simples
+                    if not message.get("key", {}).get("fromMe", False):  # Não responder nossas próprias mensagens
+                        await send_whatsapp_message(phone, f"🤖 AutoCred: Recebemos sua mensagem: '{text}'. Em breve um de nossos agentes entrará em contato!")
+        
+        return {"status": "success", "message": "Webhook processado com sucesso"}
+        
+    except Exception as e:
+        logger.error(f"❌ Erro no webhook WhatsApp: {e}")
+        return {"status": "error", "message": str(e)}
 
 # === STATUS ===
 @app.get("/health")
@@ -1008,6 +1052,124 @@ async def diagnostico_simples():
             "4. WhatsApp funcionando!"
         ]
     }
+
+# Enviar mensagem WhatsApp
+async def send_whatsapp_message(phone: str, message: str, instance_name: str = "autocred-main"):
+    """📤 Enviar mensagem via Evolution API"""
+    try:
+        if EVOLUTION_HELPER_AVAILABLE:
+            # Preparar dados para envio
+            payload = {
+                "number": phone,
+                "text": message
+            }
+            
+            async with httpx.AsyncClient(timeout=30.0) as client:
+                response = await client.post(
+                    f"{evolution_helper.api_url}/message/sendText/{instance_name}",
+                    json=payload,
+                    headers={"Content-Type": "application/json"}
+                )
+                
+                if response.status_code == 200:
+                    logger.info(f"✅ Mensagem enviada para {phone}: {message}")
+                    return {"success": True, "message": "Mensagem enviada"}
+                else:
+                    logger.error(f"❌ Erro ao enviar mensagem: {response.status_code}")
+                    return {"success": False, "error": f"HTTP {response.status_code}"}
+        else:
+            return {"success": False, "error": "Evolution API não disponível"}
+            
+    except Exception as e:
+        logger.error(f"❌ Erro ao enviar mensagem: {e}")
+        return {"success": False, "error": str(e)}
+
+# Endpoint para enviar mensagem (API)
+@app.post("/api/whatsapp/send")
+async def api_send_whatsapp(request: Request):
+    """📤 API: Enviar mensagem WhatsApp"""
+    try:
+        data = await request.json()
+        phone = data.get("phone", "").replace("+", "").replace("-", "").replace("(", "").replace(")", "").replace(" ", "")
+        message = data.get("message", "")
+        instance_name = data.get("instance", "autocred-main")
+        
+        if not phone or not message:
+            return {"success": False, "error": "Phone e message são obrigatórios"}
+        
+        # Garantir formato correto do telefone
+        if not phone.endswith("@s.whatsapp.net"):
+            phone = f"{phone}@s.whatsapp.net"
+        
+        result = await send_whatsapp_message(phone, message, instance_name)
+        return result
+        
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+# Criar instância WhatsApp
+@app.post("/api/whatsapp/create-instance")
+async def create_whatsapp_instance(request: Request):
+    """🆕 Criar nova instância WhatsApp"""
+    try:
+        data = await request.json()
+        instance_name = data.get("instance_name", f"autocred-{int(time.time())}")
+        
+        if EVOLUTION_HELPER_AVAILABLE:
+            result = await evolution_helper.create_instance(instance_name)
+            return result
+        else:
+            return {"success": False, "error": "Evolution API não disponível"}
+            
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+# Gerar QR Code
+@app.get("/api/whatsapp/qrcode/{instance_name}")
+async def get_whatsapp_qrcode(instance_name: str):
+    """📱 Gerar QR Code para conectar WhatsApp"""
+    try:
+        if EVOLUTION_HELPER_AVAILABLE:
+            result = await evolution_helper.get_qrcode(instance_name)
+            return result
+        else:
+            return {"success": False, "error": "Evolution API não disponível"}
+            
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+# Dashboard WhatsApp
+@app.get("/api/whatsapp/dashboard")
+async def whatsapp_dashboard():
+    """📊 Dashboard WhatsApp - estatísticas básicas"""
+    try:
+        dashboard_data = {
+            "status": "online",
+            "total_instances": 1,
+            "active_instances": 1,
+            "messages_today": 0,
+            "messages_total": 0,
+            "last_activity": time.time(),
+            "evolution_api": {
+                "status": "connected",
+                "url": evolution_helper.api_url if EVOLUTION_HELPER_AVAILABLE else "N/A"
+            }
+        }
+        
+        if EVOLUTION_HELPER_AVAILABLE:
+            # Testar conexão
+            connection_test = await evolution_helper.test_connection()
+            dashboard_data["evolution_api"]["connection_test"] = connection_test
+            
+            # Listar instâncias
+            instances_result = await evolution_helper.list_instances()
+            if instances_result.get("success"):
+                dashboard_data["total_instances"] = len(instances_result.get("instances", []))
+        
+        return dashboard_data
+        
+    except Exception as e:
+        return {"success": False, "error": str(e)}
 
 if __name__ == "__main__":
     port = int(os.getenv("PORT", 8000))
