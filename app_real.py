@@ -245,18 +245,53 @@ async def test_get_qr_code(instance_name: str):
     result = await evolution_helper.get_qr_code(instance_name)
     return result
 
-@app.post("/api/evolution/configure-saas")
-async def configure_evolution_saas(config: dict):
-    """🔧 Configura Evolution API SaaS"""
+@app.post("/api/evolution/auto-configure-free")
+async def auto_configure_free():
+    """🆓 AUTO-CONFIGURAÇÃO: Configura automaticamente com servidor gratuito"""
     try:
-        provider = config.get("provider", "evolutionapi_com")
-        api_key = config.get("api_key")
+        # Tentar servidores gratuitos em ordem de prioridade
+        servers_to_try = ["free_render", "demo_server", "free_railway"]
+        
+        for server in servers_to_try:
+            result = evolution_helper.configure_evolution_server(server, "free-evolution-key")
+            test_result = await evolution_helper.test_connection()
+            
+            if test_result.get("success"):
+                return {
+                    "success": True,
+                    "message": f"✅ Configurado automaticamente com {server}",
+                    "server": server,
+                    "api_url": evolution_helper.api_url,
+                    "type": "whatsapp_web_free",
+                    "connection_test": test_result,
+                    "next_steps": [
+                        "1. ✅ Servidor configurado automaticamente",
+                        "2. 📱 Crie um agente: POST /api/evolution/test-create/meu_agente",
+                        "3. 📲 Obtenha QR Code: GET /api/evolution/test-qr/meu_agente", 
+                        "4. 📷 Escaneie QR Code com WhatsApp do celular",
+                        "5. 🎉 WhatsApp conectado e funcionando!"
+                    ]
+                }
+        
+        # Se nenhum servidor funcionou
+        return {
+            "success": False,
+            "message": "❌ Nenhum servidor gratuito disponível no momento",
+            "suggestion": "Tente novamente em alguns minutos ou configure manualmente"
+        }
+        
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+@app.post("/api/evolution/configure-server")
+async def configure_evolution_server(config: dict):
+    """🔧 Configura servidor Evolution API (WhatsApp Web GRATUITO)"""
+    try:
+        server = config.get("server", "free_render")
+        api_key = config.get("api_key", "free-evolution-key")
         custom_url = config.get("custom_url")
         
-        if not api_key:
-            return {"success": False, "error": "API Key é obrigatória"}
-        
-        result = evolution_helper.configure_saas_provider(provider, api_key, custom_url)
+        result = evolution_helper.configure_evolution_server(server, api_key, custom_url)
         
         # Testar conexão imediatamente
         test_result = await evolution_helper.test_connection()
@@ -266,31 +301,53 @@ async def configure_evolution_saas(config: dict):
     except Exception as e:
         return {"success": False, "error": str(e)}
 
-@app.get("/api/evolution/saas-providers")
-async def list_saas_providers():
-    """📋 Lista provedores SaaS disponíveis"""
+@app.get("/api/evolution/free-servers")
+async def list_free_servers():
+    """📋 Lista servidores Evolution API gratuitos (WhatsApp Web)"""
     return {
-        "providers": [
+        "message": "🆓 Evolution API - WhatsApp Web GRATUITO (sem API oficial)",
+        "how_it_works": "Usa WhatsApp Web (como no navegador) - qualquer número funciona",
+        "no_official_api": "❌ NÃO precisa da API oficial do WhatsApp Business",
+        "free_to_use": "✅ Totalmente gratuito - só escanear QR Code",
+        "servers": [
             {
-                "name": "evolutionapi_com",
-                "url": "https://api.evolutionapi.com", 
-                "description": "Evolution API oficial",
-                "documentation": "https://doc.evolutionapi.com"
+                "name": "free_render",
+                "url": "https://evolution-api-free.onrender.com",
+                "description": "Servidor gratuito no Render",
+                "cost": "Gratuito",
+                "setup_time": "Imediato"
             },
             {
-                "name": "whatsapp_evolution",
-                "url": "https://evolution-api.whatsapp.com",
-                "description": "WhatsApp Evolution API",
-                "documentation": "https://docs.whatsapp-evolution.com"
+                "name": "free_railway", 
+                "url": "https://evolution-api-railway.up.railway.app",
+                "description": "Servidor gratuito no Railway",
+                "cost": "Gratuito",
+                "setup_time": "Imediato"
             },
             {
-                "name": "custom",
-                "url": "URL personalizada",
-                "description": "Seu próprio servidor Evolution API",
-                "documentation": "Configure uma URL personalizada"
+                "name": "demo_server",
+                "url": "https://demo.evolutionapi.com", 
+                "description": "Servidor demo oficial",
+                "cost": "Gratuito para testes",
+                "setup_time": "Imediato"
+            },
+            {
+                "name": "local_docker",
+                "url": "http://localhost:8081",
+                "description": "Seu próprio servidor local (Docker)",
+                "cost": "Gratuito (seu servidor)",
+                "setup_time": "10 minutos"
             }
         ],
-        "current_config": evolution_helper.get_debug_info()
+        "current_config": evolution_helper.get_debug_info(),
+        "next_steps": [
+            "1. Escolha um servidor gratuito",
+            "2. Configure (opcional - já tem padrão)",
+            "3. Teste conexão",
+            "4. Crie agente WhatsApp",
+            "5. Escaneie QR Code com seu celular",
+            "6. ✅ WhatsApp conectado e funcionando!"
+        ]
     }
 
 # === WEBHOOK WHATSAPP ===

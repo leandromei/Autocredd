@@ -10,16 +10,18 @@ import asyncio
 from typing import Dict, Any, Optional
 import logging
 
-# Configuração - Evolution API SaaS
-EVOLUTION_API_URL = os.getenv("EVOLUTION_API_URL", "https://api.evolutionapi.com")
-EVOLUTION_API_KEY = os.getenv("EVOLUTION_API_KEY", "SUA_API_KEY_AQUI")
+# Configuração - Evolution API (WhatsApp Web, SEM API oficial)
+EVOLUTION_API_URL = os.getenv("EVOLUTION_API_URL", "https://evolution-api-free.onrender.com")
+EVOLUTION_API_KEY = os.getenv("EVOLUTION_API_KEY", "free-evolution-key")
 RAILWAY_PUBLIC_DOMAIN = os.getenv("RAILWAY_PUBLIC_DOMAIN", "autocredd-production.up.railway.app")
 
-# URLs de provedores Evolution API SaaS conhecidos
-EVOLUTION_SAAS_PROVIDERS = {
-    "evolutionapi_com": "https://api.evolutionapi.com",
-    "whatsapp_evolution": "https://evolution-api.whatsapp.com", 
-    "custom": os.getenv("EVOLUTION_API_URL", "https://api.evolutionapi.com")
+# URLs de servidores Evolution API disponíveis (WhatsApp Web gratuito)
+EVOLUTION_SERVERS = {
+    "free_render": "https://evolution-api-free.onrender.com",
+    "free_railway": "https://evolution-api-railway.up.railway.app",
+    "demo_server": "https://demo.evolutionapi.com",
+    "local_docker": "http://localhost:8081",
+    "custom": os.getenv("EVOLUTION_API_URL", "https://evolution-api-free.onrender.com")
 }
 
 # Setup logging
@@ -33,22 +35,23 @@ class EvolutionAPIHelper:
         self.webhook_url = f"https://{RAILWAY_PUBLIC_DOMAIN}/webhook/whatsapp"
         self.is_saas = not ("localhost" in self.api_url or "127.0.0.1" in self.api_url)
         
-    def configure_saas_provider(self, provider_name: str, api_key: str, custom_url: str = None):
-        """Configura provedor SaaS específico"""
-        if provider_name in EVOLUTION_SAAS_PROVIDERS:
-            self.api_url = EVOLUTION_SAAS_PROVIDERS[provider_name]
+    def configure_evolution_server(self, server_name: str, api_key: str = "free-key", custom_url: str = None):
+        """Configura servidor Evolution API (WhatsApp Web gratuito)"""
+        if server_name in EVOLUTION_SERVERS:
+            self.api_url = EVOLUTION_SERVERS[server_name]
         elif custom_url:
             self.api_url = custom_url
         else:
-            self.api_url = EVOLUTION_SAAS_PROVIDERS["evolutionapi_com"]
+            self.api_url = EVOLUTION_SERVERS["free_render"]
             
-        self.api_key = api_key
+        self.api_key = api_key or "free-evolution-key"
         self.is_saas = True
-        logger.info(f"✅ Configurado Evolution API SaaS: {self.api_url}")
+        logger.info(f"✅ Configurado Evolution API (WhatsApp Web): {self.api_url}")
         return {
             "success": True,
-            "provider": provider_name,
+            "server": server_name,
             "api_url": self.api_url,
+            "type": "whatsapp_web_free",
             "configured": True
         }
         
