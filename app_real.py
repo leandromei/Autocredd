@@ -207,19 +207,36 @@ async def get_qr_code(instance_name: str):
         return {"error": str(e)}
 
 # === EVOLUTION API HELPER - ENDPOINTS DE TESTE ===
-from evolution_helper import evolution_helper
+try:
+    from evolution_helper import evolution_helper
+    EVOLUTION_HELPER_AVAILABLE = True
+except ImportError as e:
+    print(f"⚠️ Evolution Helper não disponível: {e}")
+    EVOLUTION_HELPER_AVAILABLE = False
+    evolution_helper = None
 
 @app.get("/api/evolution/test-connection")
 async def test_evolution_connection():
     """🧪 TESTE: Verifica se Evolution API está funcionando"""
-    result = await evolution_helper.test_connection()
-    return result
+    if not EVOLUTION_HELPER_AVAILABLE:
+        return {"success": False, "error": "Evolution Helper não disponível"}
+    try:
+        result = await evolution_helper.test_connection()
+        return result
+    except Exception as e:
+        return {"success": False, "error": f"Erro no teste: {str(e)}"}
 
 @app.get("/api/evolution/debug")
 async def evolution_debug():
     """🧪 DEBUG: Informações de configuração da Evolution API"""
-    debug_info = evolution_helper.get_debug_info()
-    return debug_info
+    if not EVOLUTION_HELPER_AVAILABLE:
+        return {"error": "Evolution Helper não disponível", "available": False}
+    try:
+        debug_info = evolution_helper.get_debug_info()
+        debug_info["available"] = True
+        return debug_info
+    except Exception as e:
+        return {"error": str(e), "available": False}
 
 @app.get("/api/evolution/test-instances")
 async def test_list_instances():
@@ -242,15 +259,22 @@ async def test_instance_status(instance_name: str):
 @app.get("/api/evolution/test-qr/{instance_name}")
 async def test_get_qr_code(instance_name: str):
     """🧪 TESTE: Obtém QR Code de instância"""
-    result = await evolution_helper.get_qr_code(instance_name)
-    return result
+    if not EVOLUTION_HELPER_AVAILABLE:
+        return {"success": False, "error": "Evolution Helper não disponível"}
+    try:
+        result = await evolution_helper.get_qr_code(instance_name)
+        return result
+    except Exception as e:
+        return {"success": False, "error": f"Erro ao obter QR: {str(e)}"}
 
 @app.post("/api/evolution/auto-configure-free")
 async def auto_configure_free():
     """🆓 AUTO-CONFIGURAÇÃO: Configura automaticamente com servidor gratuito"""
+    if not EVOLUTION_HELPER_AVAILABLE:
+        return {"success": False, "error": "Evolution Helper não disponível"}
     try:
         # Tentar servidores gratuitos em ordem de prioridade
-        servers_to_try = ["free_render", "demo_server", "free_railway"]
+        servers_to_try = ["free_railway", "public_demo", "demo_server"]
         
         for server in servers_to_try:
             result = evolution_helper.configure_evolution_server(server, "free-evolution-key")
@@ -311,23 +335,23 @@ async def list_free_servers():
         "free_to_use": "✅ Totalmente gratuito - só escanear QR Code",
         "servers": [
             {
-                "name": "free_render",
-                "url": "https://evolution-api-free.onrender.com",
-                "description": "Servidor gratuito no Render",
+                "name": "free_railway",
+                "url": "https://evo-instance.onrender.com",
+                "description": "Servidor gratuito no Render (Atualizado)",
                 "cost": "Gratuito",
                 "setup_time": "Imediato"
             },
             {
-                "name": "free_railway", 
-                "url": "https://evolution-api-railway.up.railway.app",
-                "description": "Servidor gratuito no Railway",
+                "name": "public_demo", 
+                "url": "https://evolution-api.atendai.online",
+                "description": "Servidor público da Atendai",
                 "cost": "Gratuito",
                 "setup_time": "Imediato"
             },
             {
                 "name": "demo_server",
-                "url": "https://demo.evolutionapi.com", 
-                "description": "Servidor demo oficial",
+                "url": "https://evo-demo.atendai.online", 
+                "description": "Servidor demo da Atendai",
                 "cost": "Gratuito para testes",
                 "setup_time": "Imediato"
             },
@@ -362,6 +386,16 @@ async def whatsapp_webhook(data: dict):
 @app.get("/health")
 async def health():
     return {"status": "healthy", "version": "2.0.0"}
+
+@app.get("/api/evolution/status")
+async def evolution_status():
+    """🔍 STATUS: Verifica se Evolution API está disponível"""
+    return {
+        "evolution_helper_available": EVOLUTION_HELPER_AVAILABLE,
+        "evolution_helper_loaded": evolution_helper is not None,
+        "timestamp": "2024-12-19",
+        "status": "ready" if EVOLUTION_HELPER_AVAILABLE else "error"
+    }
 
 @app.get("/api/frontend-status")
 async def frontend_status():

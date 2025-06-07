@@ -1,0 +1,7 @@
+RAILWAY FORCE DEPLOY - FRONTEND INTEGRATION
+Timestamp: 2025-06-06 12:30
+Version: v4.0 - FULLSTACK COMPLETE
+Status: FORCE REDEPLOY WITH FRONTEND DIST FILES
+
+This file is created to force Railway deployment detection.
+Frontend dist files are now included in the repository. 

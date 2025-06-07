@@ -11,17 +11,18 @@ from typing import Dict, Any, Optional
 import logging
 
 # Configuração - Evolution API (WhatsApp Web, SEM API oficial)
-EVOLUTION_API_URL = os.getenv("EVOLUTION_API_URL", "https://evolution-api-free.onrender.com")
-EVOLUTION_API_KEY = os.getenv("EVOLUTION_API_KEY", "free-evolution-key")
+EVOLUTION_API_URL = os.getenv("EVOLUTION_API_URL", "https://evo-instance.onrender.com")
+EVOLUTION_API_KEY = os.getenv("EVOLUTION_API_KEY", "B6D711FCDE4D4FD5936544120E713976")
 RAILWAY_PUBLIC_DOMAIN = os.getenv("RAILWAY_PUBLIC_DOMAIN", "autocredd-production.up.railway.app")
 
 # URLs de servidores Evolution API disponíveis (WhatsApp Web gratuito)
 EVOLUTION_SERVERS = {
     "free_render": "https://evolution-api-free.onrender.com",
-    "free_railway": "https://evolution-api-railway.up.railway.app",
-    "demo_server": "https://demo.evolutionapi.com",
+    "free_railway": "https://evo-instance.onrender.com",
+    "demo_server": "https://evo-demo.atendai.online",
+    "public_demo": "https://evolution-api.atendai.online",
     "local_docker": "http://localhost:8081",
-    "custom": os.getenv("EVOLUTION_API_URL", "https://evolution-api-free.onrender.com")
+    "custom": os.getenv("EVOLUTION_API_URL", "https://evo-instance.onrender.com")
 }
 
 # Setup logging
@@ -59,27 +60,41 @@ class EvolutionAPIHelper:
         """Testa se a Evolution API está funcionando"""
         try:
             async with httpx.AsyncClient(timeout=10.0) as client:
-                response = await client.get(
-                    f"{self.api_url}/instance/fetchInstances",
-                    headers={"apikey": self.api_key}
-                )
+                # Lista de endpoints para testar
+                endpoints_to_try = [
+                    "/instance/fetchInstances",
+                    "/instances",
+                    "/manager/fetchInstances",
+                    "/api/v1/instances"
+                ]
                 
-                if response.status_code == 200:
-                    data = response.json()
-                    return {
-                        "success": True,
-                        "status": "online",
-                        "instances": len(data) if isinstance(data, list) else 0,
-                        "message": "Evolution API está funcionando",
-                        "url": self.api_url
-                    }
-                else:
-                    return {
-                        "success": False,
-                        "status": "error",
-                        "message": f"HTTP {response.status_code}: {response.text}",
-                        "url": self.api_url
-                    }
+                for endpoint in endpoints_to_try:
+                    try:
+                        response = await client.get(
+                            f"{self.api_url}{endpoint}",
+                            headers={"apikey": self.api_key}
+                        )
+                        
+                        if response.status_code == 200:
+                            data = response.json()
+                            return {
+                                "success": True,
+                                "status": "online",
+                                "instances": len(data) if isinstance(data, list) else 0,
+                                "message": f"Evolution API está funcionando (endpoint: {endpoint})",
+                                "url": self.api_url,
+                                "working_endpoint": endpoint
+                            }
+                    except:
+                        continue
+                
+                # Se nenhum endpoint funcionou, retorna erro
+                return {
+                    "success": False,
+                    "status": "error",
+                    "message": f"Nenhum endpoint funcionou no servidor {self.api_url}",
+                    "url": self.api_url
+                }
                     
         except Exception as e:
             return {
