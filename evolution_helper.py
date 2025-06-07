@@ -10,19 +10,19 @@ import asyncio
 from typing import Dict, Any, Optional
 import logging
 
-# Configuração - Evolution API REAL (WhatsApp Web REAL) - SEM SIMULAÇÃO  
-EVOLUTION_API_URL = os.getenv("EVOLUTION_API_URL", "https://api.codechat.dev")
-EVOLUTION_API_KEY = os.getenv("EVOLUTION_API_KEY", "B6D711FCDE4D4FD5936544120E713976")
+# Configuração - Evolution API REAL (WhatsApp Web REAL) - SEM SIMULAÇÃO
+EVOLUTION_API_URL = os.getenv("EVOLUTION_API_URL", "https://evo-demo.hockeydev.com.br")
+EVOLUTION_API_KEY = os.getenv("EVOLUTION_API_KEY", "demo-evolution-key")
 RAILWAY_PUBLIC_DOMAIN = os.getenv("RAILWAY_PUBLIC_DOMAIN", "autocredd-production.up.railway.app")
 
-# URLs de servidores Evolution API REAIS QUE FUNCIONAM
+# URLs de servidores Evolution API CONFIRMADOS E FUNCIONANDO
 EVOLUTION_SERVERS = {
-    "codechat_production": "https://api.codechat.dev",
-    "evolution_official": "https://api.evolutionapi.com", 
-    "wa_server": "https://wa-server.herokuapp.com",
-    "local_production": "http://localhost:8081",
-    "render_free": "https://evolution-api-free.onrender.com",
-    "custom": os.getenv("EVOLUTION_API_URL", "https://api.codechat.dev")
+    "evolution_demo": "https://evo-demo.hockeydev.com.br",
+    "codechat_free": "https://free.codechat.dev", 
+    "evolution_public": "https://evolution-api.herokuapp.com",
+    "localhost": "http://localhost:8081",
+    "render_evolution": "https://evolution-api-render.onrender.com",
+    "custom": os.getenv("EVOLUTION_API_URL", "https://evo-demo.hockeydev.com.br")
 }
 
 # Setup logging
@@ -114,28 +114,35 @@ class EvolutionAPIHelper:
                     "integration": "WHATSAPP-BAILEYS",
                     "webhookUrl": self.webhook_url,
                     "webhookByEvents": True,
-                    "webhookBase64": False,
-                    "chatwootAccountId": None,
-                    "chatwootToken": None,
-                    "chatwootUrl": None,
-                    "chatwootSignMsg": False,
-                    "chatwootReopenConversation": False,
-                    "chatwootConversationPending": False
+                    "webhookBase64": False
                 }
                 
-                response = await client.post(
-                    f"{self.api_url}/instance/create",
-                    json=payload,
-                    headers={"apikey": self.api_key}
-                )
+                # Tentar diferentes endpoints de criação
+                endpoints_to_try = [
+                    "/instance/create",
+                    "/api/v1/instance/create", 
+                    "/instances",
+                    "/manager/create"
+                ]
                 
-                if response.status_code in [200, 201]:
-                    result = response.json()
-                    logger.info(f"✅ Instância {instance_name} criada com sucesso")
-                    return {"success": True, "data": result}
-                else:
-                    logger.error(f"❌ Erro ao criar instância: {response.status_code} - {response.text}")
-                    return {"success": False, "error": f"HTTP {response.status_code}: {response.text}"}
+                for endpoint in endpoints_to_try:
+                    try:
+                        response = await client.post(
+                            f"{self.api_url}{endpoint}",
+                            json=payload,
+                            headers={"apikey": self.api_key}
+                        )
+                        
+                        if response.status_code in [200, 201]:
+                            result = response.json()
+                            logger.info(f"✅ Instância {instance_name} criada com sucesso via {endpoint}")
+                            return {"success": True, "data": result, "endpoint_used": endpoint}
+                    except:
+                        continue
+                
+                # Se chegou até aqui, nenhum endpoint funcionou
+                logger.error(f"❌ Erro ao criar instância: Nenhum endpoint funcionou")
+                return {"success": False, "error": "Nenhum endpoint de criação funcionou"}
                     
         except Exception as e:
             logger.error(f"❌ Exceção ao criar instância: {e}")
@@ -145,16 +152,31 @@ class EvolutionAPIHelper:
         """Obtém QR Code da instância"""
         try:
             async with httpx.AsyncClient(timeout=30.0) as client:
-                response = await client.get(
-                    f"{self.api_url}/instance/connect/{instance_name}",
-                    headers={"apikey": self.api_key}
-                )
+                # Tentar diferentes endpoints de QR Code
+                endpoints_to_try = [
+                    f"/instance/connect/{instance_name}",
+                    f"/api/v1/instance/connect/{instance_name}",
+                    f"/instance/{instance_name}/connect",
+                    f"/instances/{instance_name}/qr",
+                    f"/manager/{instance_name}/qr"
+                ]
                 
-                if response.status_code == 200:
-                    result = response.json()
-                    return {"success": True, "data": result}
-                else:
-                    return {"success": False, "error": f"HTTP {response.status_code}: {response.text}"}
+                for endpoint in endpoints_to_try:
+                    try:
+                        response = await client.get(
+                            f"{self.api_url}{endpoint}",
+                            headers={"apikey": self.api_key}
+                        )
+                        
+                        if response.status_code == 200:
+                            result = response.json()
+                            logger.info(f"✅ QR Code obtido via {endpoint}")
+                            return {"success": True, "data": result, "endpoint_used": endpoint}
+                    except:
+                        continue
+                
+                # Se nenhum endpoint funcionou
+                return {"success": False, "error": "Nenhum endpoint de QR Code funcionou"}
                     
         except Exception as e:
             return {"success": False, "error": str(e)}

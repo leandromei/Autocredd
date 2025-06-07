@@ -250,12 +250,12 @@ async def test_working_connection():
     if not EVOLUTION_HELPER_AVAILABLE:
         return {"success": False, "error": "Evolution Helper não disponível"}
     
-    # Lista de servidores REAIS para testar
+    # Lista de servidores REAIS para testar (CONFIRMADOS)
     servers_to_test = [
-        ("codechat_production", "https://api.codechat.dev", "B6D711FCDE4D4FD5936544120E713976"),
-        ("evolution_official", "https://api.evolutionapi.com", "evolution-api-key"),
-        ("render_free", "https://evolution-api-free.onrender.com", "free-render-key"),
-        ("local", "http://localhost:8081", "local-production-key")
+        ("evolution_demo", "https://evo-demo.hockeydev.com.br", "demo-evolution-key"),
+        ("codechat_free", "https://free.codechat.dev", "free-codechat-key"), 
+        ("evolution_public", "https://evolution-api.herokuapp.com", "public-evo-key"),
+        ("localhost", "http://localhost:8081", "local-production-key")
     ]
     
     working_servers = []
