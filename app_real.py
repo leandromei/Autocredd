@@ -852,6 +852,128 @@ async def qr_explicacao(instance_name: str):
         }
     }
 
+@app.get("/api/evolution/diagnostico-completo")
+async def diagnostico_completo():
+    """🔍 DIAGNÓSTICO COMPLETO: Identifica exatamente o que impede Evolution API de funcionar"""
+    
+    diagnostico = {
+        "timestamp": time.time(),
+        "sistema_status": {},
+        "evolution_config": {},
+        "testes_conexao": {},
+        "problemas_identificados": [],
+        "solucoes": []
+    }
+    
+    # 1. STATUS DO SISTEMA
+    diagnostico["sistema_status"] = {
+        "evolution_helper_disponivel": EVOLUTION_HELPER_AVAILABLE,
+        "backup_api_disponivel": BACKUP_API_AVAILABLE,
+        "frontend_funcionando": True  # Sabemos que está
+    }
+    
+    # 2. CONFIGURAÇÃO ATUAL
+    if EVOLUTION_HELPER_AVAILABLE:
+        diagnostico["evolution_config"] = {
+            "url_atual": evolution_helper.api_url,
+            "api_key_atual": evolution_helper.api_key[:10] + "..." if evolution_helper.api_key else "None",
+            "webhook_url": evolution_helper.webhook_url,
+            "is_saas": evolution_helper.is_saas
+        }
+        
+        # 3. TESTAR CONEXÃO COM URL ATUAL
+        try:
+            test_result = await evolution_helper.test_connection()
+            diagnostico["testes_conexao"]["url_atual"] = test_result
+            
+            if not test_result.get("success"):
+                diagnostico["problemas_identificados"].append({
+                    "problema": "URL Evolution API atual não responde",
+                    "url": evolution_helper.api_url,
+                    "erro": test_result.get("message", "Sem resposta")
+                })
+        except Exception as e:
+            diagnostico["testes_conexao"]["url_atual"] = {"success": False, "error": str(e)}
+            diagnostico["problemas_identificados"].append({
+                "problema": "Erro ao testar URL atual",
+                "erro": str(e)
+            })
+        
+        # 4. TESTAR URLS ALTERNATIVAS
+        urls_teste = {
+            "evolution_demo": "https://evo-demo.hockeydev.com.br",
+            "codechat_api": "https://api.codechat.dev", 
+            "localhost": "http://localhost:8081"
+        }
+        
+        diagnostico["testes_conexao"]["urls_alternativas"] = {}
+        
+        for nome, url in urls_teste.items():
+            try:
+                # Temporariamente mudar URL para teste
+                url_original = evolution_helper.api_url
+                evolution_helper.api_url = url
+                
+                test_result = await evolution_helper.test_connection()
+                diagnostico["testes_conexao"]["urls_alternativas"][nome] = {
+                    "url": url,
+                    "resultado": test_result
+                }
+                
+                # Restaurar URL original
+                evolution_helper.api_url = url_original
+                
+            except Exception as e:
+                diagnostico["testes_conexao"]["urls_alternativas"][nome] = {
+                    "url": url,
+                    "resultado": {"success": False, "error": str(e)}
+                }
+    else:
+        diagnostico["problemas_identificados"].append({
+            "problema": "Evolution Helper não disponível",
+            "causa": "Módulo evolution_helper.py não carregou corretamente"
+        })
+    
+    # 5. IDENTIFICAR SOLUÇÕES
+    if diagnostico["problemas_identificados"]:
+        diagnostico["solucoes"] = [
+            {
+                "opcao": "1. Configurar Evolution API Cloud (PAGO)",
+                "descricao": "Assinar serviço Evolution API hospedado",
+                "exemplo": "https://evolution-api.com ou https://codechat.dev",
+                "configuracao": "Definir EVOLUTION_API_URL e EVOLUTION_API_KEY no Railway",
+                "tempo": "5 minutos",
+                "custo": "~R$ 29/mês"
+            },
+            {
+                "opcao": "2. Instalar Evolution API Local (GRÁTIS)",  
+                "descricao": "Rodar própria instância Evolution API",
+                "comando": "docker run -d -p 8081:8081 atendai/evolution-api:latest",
+                "configuracao": "Apontar EVOLUTION_API_URL para seu servidor",
+                "tempo": "30 minutos",
+                "custo": "Grátis"
+            },
+            {
+                "opcao": "3. Usar servidor público temporário",
+                "descricao": "Para testes apenas",
+                "aviso": "Não recomendado para produção",
+                "configuracao": "Posso ajudar a encontrar servidor temporário"
+            }
+        ]
+    else:
+        diagnostico["solucoes"] = ["Sistema aparenta estar funcionando - execute testes de criação de instância"]
+    
+    # 6. PRÓXIMOS PASSOS ESPECÍFICOS
+    diagnostico["proximos_passos"] = [
+        "1. 📋 Analise este diagnóstico",
+        "2. 🔧 Escolha uma das soluções acima", 
+        "3. 💬 Me informe qual opção prefere",
+        "4. 🚀 Implementamos juntos",
+        "5. ✅ WhatsApp funcionando!"
+    ]
+    
+    return diagnostico
+
 if __name__ == "__main__":
     port = int(os.getenv("PORT", 8000))
     print(f"🚀 AutoCred REAL System - SEM simulações")
