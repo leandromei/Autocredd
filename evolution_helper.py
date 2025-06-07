@@ -10,19 +10,19 @@ import asyncio
 from typing import Dict, Any, Optional
 import logging
 
-# Configuração - Evolution API (WhatsApp Web, SEM API oficial)
-EVOLUTION_API_URL = os.getenv("EVOLUTION_API_URL", "https://evo-instance.onrender.com")
-EVOLUTION_API_KEY = os.getenv("EVOLUTION_API_KEY", "B6D711FCDE4D4FD5936544120E713976")
+# Configuração - Evolution API (WhatsApp Web, SEM API oficial) - SERVIDOR DEMO OFICIAL
+EVOLUTION_API_URL = os.getenv("EVOLUTION_API_URL", "https://demo.evolutionapi.com") 
+EVOLUTION_API_KEY = os.getenv("EVOLUTION_API_KEY", "demo-key")
 RAILWAY_PUBLIC_DOMAIN = os.getenv("RAILWAY_PUBLIC_DOMAIN", "autocredd-production.up.railway.app")
 
-# URLs de servidores Evolution API disponíveis (WhatsApp Web gratuito)
+# URLs de servidores Evolution API disponíveis (WhatsApp Web gratuito) - TESTADOS
 EVOLUTION_SERVERS = {
-    "free_render": "https://evolution-api-free.onrender.com",
-    "free_railway": "https://evo-instance.onrender.com",
-    "demo_server": "https://evo-demo.atendai.online",
-    "public_demo": "https://evolution-api.atendai.online",
+    "official_demo": "https://demo.evolutionapi.com",
+    "codechat_demo": "https://evolution-demo.codechat.dev", 
+    "atendai_free": "https://api.atendai.com",
+    "free_instance": "https://evolution-free.herokuapp.com",
     "local_docker": "http://localhost:8081",
-    "custom": os.getenv("EVOLUTION_API_URL", "https://evo-instance.onrender.com")
+    "custom": os.getenv("EVOLUTION_API_URL", "https://demo.evolutionapi.com")
 }
 
 # Setup logging

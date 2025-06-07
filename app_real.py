@@ -273,11 +273,11 @@ async def auto_configure_free():
     if not EVOLUTION_HELPER_AVAILABLE:
         return {"success": False, "error": "Evolution Helper não disponível"}
     try:
-        # Tentar servidores gratuitos em ordem de prioridade
-        servers_to_try = ["free_railway", "public_demo", "demo_server"]
+        # Tentar servidores gratuitos em ordem de prioridade (TESTADOS)
+        servers_to_try = ["official_demo", "codechat_demo", "atendai_free"]
         
         for server in servers_to_try:
-            result = evolution_helper.configure_evolution_server(server, "free-evolution-key")
+            result = evolution_helper.configure_evolution_server(server, "demo-api-key")
             test_result = await evolution_helper.test_connection()
             
             if test_result.get("success"):
