@@ -7,6 +7,7 @@ Gerencia toda a comunicação com Evolution API de forma isolada
 import os
 import httpx
 import asyncio
+import json
 from typing import Dict, Any, Optional
 import logging
 
@@ -29,206 +30,130 @@ EVOLUTION_SERVERS = {
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-class EvolutionAPIHelper:
+class EvolutionHelper:
     def __init__(self):
-        self.api_url = EVOLUTION_API_URL
-        self.api_key = EVOLUTION_API_KEY
-        self.webhook_url = f"https://{RAILWAY_PUBLIC_DOMAIN}/webhook/whatsapp"
-        self.is_saas = not ("localhost" in self.api_url or "127.0.0.1" in self.api_url)
-        
-    def configure_evolution_server(self, server_name: str, api_key: str = "free-key", custom_url: str = None):
-        """Configura servidor Evolution API (WhatsApp Web gratuito)"""
-        if server_name in EVOLUTION_SERVERS:
-            self.api_url = EVOLUTION_SERVERS[server_name]
-        elif custom_url:
-            self.api_url = custom_url
-        else:
-            self.api_url = EVOLUTION_SERVERS["free_render"]
-            
-        self.api_key = api_key or "free-evolution-key"
+        # 🚀 SUA EVOLUTION API PRÓPRIA FUNCIONANDO!
+        self.api_url = "https://autocred-evolution-api.onrender.com"
+        self.api_key = "autocred-2024-super-secret-key"
+        self.webhook_url = "https://autocred-evolution.up.railway.app/webhook/whatsapp"
         self.is_saas = True
-        logger.info(f"✅ Configurado Evolution API (WhatsApp Web): {self.api_url}")
-        return {
-            "success": True,
-            "server": server_name,
-            "api_url": self.api_url,
-            "type": "whatsapp_web_free",
-            "configured": True
-        }
         
-    async def test_connection(self) -> Dict[str, Any]:
-        """Testa se a Evolution API está funcionando"""
+    async def test_connection(self):
+        """Testa conexão com SUA Evolution API própria"""
         try:
             async with httpx.AsyncClient(timeout=10.0) as client:
-                # Lista de endpoints para testar
-                endpoints_to_try = [
-                    "/instance/fetchInstances",
-                    "/instances",
-                    "/manager/fetchInstances",
-                    "/api/v1/instances"
-                ]
+                response = await client.get(f"{self.api_url}/")
                 
-                for endpoint in endpoints_to_try:
-                    try:
-                        response = await client.get(
-                            f"{self.api_url}{endpoint}",
-                            headers={"apikey": self.api_key}
-                        )
-                        
-                        if response.status_code == 200:
-                            data = response.json()
-                            return {
-                                "success": True,
-                                "status": "online",
-                                "instances": len(data) if isinstance(data, list) else 0,
-                                "message": f"Evolution API está funcionando (endpoint: {endpoint})",
-                                "url": self.api_url,
-                                "working_endpoint": endpoint
-                            }
-                    except:
-                        continue
-                
-                # Se nenhum endpoint funcionou, retorna erro
-                return {
-                    "success": False,
-                    "status": "error",
-                    "message": f"Nenhum endpoint funcionou no servidor {self.api_url}",
-                    "url": self.api_url
-                }
+                if response.status_code == 200:
+                    data = response.json()
+                    return {
+                        "success": True,
+                        "message": "✅ SUA Evolution API própria funcionando!",
+                        "status": data.get("status"),
+                        "version": data.get("versão", data.get("version")),
+                        "url": self.api_url
+                    }
+                else:
+                    return {
+                        "success": False,
+                        "message": f"❌ Erro HTTP: {response.status_code}",
+                        "url": self.api_url
+                    }
                     
         except Exception as e:
             return {
                 "success": False,
-                "status": "offline",
-                "message": f"Erro de conexão: {str(e)}",
+                "message": f"❌ Erro de conexão: {str(e)}",
                 "url": self.api_url
             }
     
-    async def create_instance(self, instance_name: str) -> Dict[str, Any]:
-        """Cria uma instância WhatsApp"""
+    async def create_instance(self, instance_name: str):
+        """Cria nova instância WhatsApp"""
         try:
             async with httpx.AsyncClient(timeout=30.0) as client:
                 payload = {
                     "instanceName": instance_name,
                     "qrcode": True,
-                    "integration": "WHATSAPP-BAILEYS",
-                    "webhookUrl": self.webhook_url,
-                    "webhookByEvents": True,
-                    "webhookBase64": False
+                    "webhookUrl": self.webhook_url
                 }
                 
-                # Tentar diferentes endpoints de criação
-                endpoints_to_try = [
-                    "/instance/create",
-                    "/api/v1/instance/create", 
-                    "/instances",
-                    "/manager/create"
-                ]
-                
-                for endpoint in endpoints_to_try:
-                    try:
-                        response = await client.post(
-                            f"{self.api_url}{endpoint}",
-                            json=payload,
-                            headers={"apikey": self.api_key}
-                        )
-                        
-                        if response.status_code in [200, 201]:
-                            result = response.json()
-                            logger.info(f"✅ Instância {instance_name} criada com sucesso via {endpoint}")
-                            return {"success": True, "data": result, "endpoint_used": endpoint}
-                    except:
-                        continue
-                
-                # Se chegou até aqui, nenhum endpoint funcionou
-                logger.error(f"❌ Erro ao criar instância: Nenhum endpoint funcionou")
-                return {"success": False, "error": "Nenhum endpoint de criação funcionou"}
-                    
-        except Exception as e:
-            logger.error(f"❌ Exceção ao criar instância: {e}")
-            return {"success": False, "error": str(e)}
-    
-    async def get_qr_code(self, instance_name: str) -> Dict[str, Any]:
-        """Obtém QR Code da instância"""
-        try:
-            async with httpx.AsyncClient(timeout=30.0) as client:
-                # Tentar diferentes endpoints de QR Code
-                endpoints_to_try = [
-                    f"/instance/connect/{instance_name}",
-                    f"/api/v1/instance/connect/{instance_name}",
-                    f"/instance/{instance_name}/connect",
-                    f"/instances/{instance_name}/qr",
-                    f"/manager/{instance_name}/qr"
-                ]
-                
-                for endpoint in endpoints_to_try:
-                    try:
-                        response = await client.get(
-                            f"{self.api_url}{endpoint}",
-                            headers={"apikey": self.api_key}
-                        )
-                        
-                        if response.status_code == 200:
-                            result = response.json()
-                            logger.info(f"✅ QR Code obtido via {endpoint}")
-                            return {"success": True, "data": result, "endpoint_used": endpoint}
-                    except:
-                        continue
-                
-                # Se nenhum endpoint funcionou
-                return {"success": False, "error": "Nenhum endpoint de QR Code funcionou"}
-                    
-        except Exception as e:
-            return {"success": False, "error": str(e)}
-    
-    async def get_instance_status(self, instance_name: str) -> Dict[str, Any]:
-        """Verifica status de uma instância"""
-        try:
-            async with httpx.AsyncClient(timeout=15.0) as client:
-                response = await client.get(
-                    f"{self.api_url}/instance/fetchInstances",
-                    headers={"apikey": self.api_key}
+                response = await client.post(
+                    f"{self.api_url}/instance/create",
+                    json=payload,
+                    headers={"Content-Type": "application/json"}
                 )
                 
                 if response.status_code == 200:
-                    instances = response.json()
-                    for instance in instances:
-                        if instance.get("name") == instance_name:
-                            return {
-                                "success": True,
-                                "instance_name": instance_name,
-                                "status": instance.get("connectionStatus", "unknown"),
-                                "state": instance.get("state", "unknown"),
-                                "data": instance
-                            }
-                    
+                    data = response.json()
                     return {
-                        "success": False,
-                        "error": f"Instância {instance_name} não encontrada"
+                        "success": True,
+                        "message": f"✅ Instância {instance_name} criada!",
+                        "instance": data.get("instance", {}),
+                        "data": data
                     }
                 else:
-                    return {"success": False, "error": f"HTTP {response.status_code}: {response.text}"}
+                    return {
+                        "success": False,
+                        "message": f"❌ Erro ao criar instância: {response.status_code}",
+                        "response": response.text
+                    }
                     
         except Exception as e:
-            return {"success": False, "error": str(e)}
+            return {
+                "success": False,
+                "message": f"❌ Erro: {str(e)}"
+            }
     
-    async def list_instances(self) -> Dict[str, Any]:
+    async def get_qrcode(self, instance_name: str):
+        """Gera QR Code para conectar WhatsApp"""
+        try:
+            async with httpx.AsyncClient(timeout=20.0) as client:
+                response = await client.get(f"{self.api_url}/instance/qrcode/{instance_name}")
+                
+                if response.status_code == 200:
+                    data = response.json()
+                    return {
+                        "success": True,
+                        "message": f"✅ QR Code gerado para {instance_name}",
+                        "qrcode": data.get("qrcode"),
+                        "instance": data.get("instance")
+                    }
+                else:
+                    return {
+                        "success": False,
+                        "message": f"❌ Erro ao gerar QR: {response.status_code}"
+                    }
+                    
+        except Exception as e:
+            return {
+                "success": False,
+                "message": f"❌ Erro: {str(e)}"
+            }
+    
+    async def list_instances(self):
         """Lista todas as instâncias"""
         try:
-            async with httpx.AsyncClient(timeout=15.0) as client:
-                response = await client.get(
-                    f"{self.api_url}/instance/fetchInstances",
-                    headers={"apikey": self.api_key}
-                )
+            async with httpx.AsyncClient(timeout=10.0) as client:
+                response = await client.get(f"{self.api_url}/manager/fetchInstances")
                 
                 if response.status_code == 200:
                     instances = response.json()
-                    return {"success": True, "instances": instances, "count": len(instances)}
+                    return {
+                        "success": True,
+                        "message": f"✅ {len(instances)} instâncias encontradas",
+                        "instances": instances
+                    }
                 else:
-                    return {"success": False, "error": f"HTTP {response.status_code}: {response.text}"}
+                    return {
+                        "success": False,
+                        "message": f"❌ Erro ao listar: {response.status_code}"
+                    }
                     
         except Exception as e:
-            return {"success": False, "error": str(e)}
+            return {
+                "success": False,
+                "message": f"❌ Erro: {str(e)}"
+            }
 
     def get_debug_info(self) -> Dict[str, Any]:
         """Retorna informações de debug da configuração"""
@@ -240,4 +165,4 @@ class EvolutionAPIHelper:
         }
 
 # Instância global
-evolution_helper = EvolutionAPIHelper() 
+evolution_helper = EvolutionHelper() 

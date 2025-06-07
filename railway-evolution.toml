@@ -1,11 +1,30 @@
 [build]
-builder = "docker"
+builder = "dockerfile"
 dockerfilePath = "Dockerfile.evolution"
 
 [deploy]
-healthcheckPath = "/manager/fetchInstances"
-healthcheckTimeout = 60
-restartPolicyType = "on-failure"
+healthcheckPath = "/manager/health"
+healthcheckTimeout = 300
+restartPolicyType = "on_failure"
+restartPolicyMaxRetries = 3
+
+[[services]]
+name = "evolution-api"
+
+[services.source]
+repo = "leandromei/autocred-evolution-api"
+branch = "main"
+
+[[services.variables]]
+EVOLUTION_API_KEY = "autocred-2024-super-secret-key"
+JWT_SECRET = "autocred-jwt-ultra-secret-2024"
+INSTANCE_TOKEN = "autocred-instance-token-2024"
+WEBHOOK_URL = "https://autocred-evolution.up.railway.app/webhook/whatsapp"
+NODE_ENV = "production"
+PORT = "8080"
+
+[services.domains]
+# Railway vai gerar automaticamente
 
 [env]
 AUTHENTICATION_TYPE = "apikey"
