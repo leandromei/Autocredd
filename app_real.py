@@ -206,6 +206,45 @@ async def get_qr_code(instance_name: str):
     except Exception as e:
         return {"error": str(e)}
 
+# === EVOLUTION API HELPER - ENDPOINTS DE TESTE ===
+from evolution_helper import evolution_helper
+
+@app.get("/api/evolution/test-connection")
+async def test_evolution_connection():
+    """🧪 TESTE: Verifica se Evolution API está funcionando"""
+    result = await evolution_helper.test_connection()
+    return result
+
+@app.get("/api/evolution/debug")
+async def evolution_debug():
+    """🧪 DEBUG: Informações de configuração da Evolution API"""
+    debug_info = evolution_helper.get_debug_info()
+    return debug_info
+
+@app.get("/api/evolution/test-instances")
+async def test_list_instances():
+    """🧪 TESTE: Lista instâncias da Evolution API"""
+    result = await evolution_helper.list_instances()
+    return result
+
+@app.post("/api/evolution/test-create/{instance_name}")
+async def test_create_instance(instance_name: str):
+    """🧪 TESTE: Cria instância de teste"""
+    result = await evolution_helper.create_instance(instance_name)
+    return result
+
+@app.get("/api/evolution/test-status/{instance_name}")
+async def test_instance_status(instance_name: str):
+    """🧪 TESTE: Verifica status de instância"""
+    result = await evolution_helper.get_instance_status(instance_name)
+    return result
+
+@app.get("/api/evolution/test-qr/{instance_name}")
+async def test_get_qr_code(instance_name: str):
+    """🧪 TESTE: Obtém QR Code de instância"""
+    result = await evolution_helper.get_qr_code(instance_name)
+    return result
+
 # === WEBHOOK WHATSAPP ===
 @app.post("/webhook/whatsapp")
 async def whatsapp_webhook(data: dict):
