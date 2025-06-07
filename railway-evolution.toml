@@ -1,0 +1,24 @@
+[build]
+builder = "docker"
+dockerfilePath = "Dockerfile.evolution"
+
+[deploy]
+healthcheckPath = "/manager/fetchInstances"
+healthcheckTimeout = 60
+restartPolicyType = "on-failure"
+
+[env]
+AUTHENTICATION_TYPE = "apikey"
+AUTHENTICATION_API_KEY = "autocred-evolution-key-2024"
+AUTHENTICATION_EXPOSE_IN_FETCH_INSTANCES = "true"
+DATABASE_ENABLED = "true"
+DATABASE_CONNECTION_URI = "file:./db/evolution.db"
+SERVER_TYPE = "http"
+SERVER_PORT = "8081"
+CORS_ORIGIN = "*"
+CORS_METHODS = "POST,GET,PUT,DELETE"
+CORS_CREDENTIALS = "true"
+WEBHOOK_GLOBAL_ENABLED = "true"
+WEBHOOK_GLOBAL_URL = "https://autocredd-production.up.railway.app/webhook/whatsapp"
+LOG_LEVEL = "info"
+QRCODE_LIMIT = "30" 
