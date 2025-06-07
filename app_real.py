@@ -245,6 +245,54 @@ async def test_get_qr_code(instance_name: str):
     result = await evolution_helper.get_qr_code(instance_name)
     return result
 
+@app.post("/api/evolution/configure-saas")
+async def configure_evolution_saas(config: dict):
+    """🔧 Configura Evolution API SaaS"""
+    try:
+        provider = config.get("provider", "evolutionapi_com")
+        api_key = config.get("api_key")
+        custom_url = config.get("custom_url")
+        
+        if not api_key:
+            return {"success": False, "error": "API Key é obrigatória"}
+        
+        result = evolution_helper.configure_saas_provider(provider, api_key, custom_url)
+        
+        # Testar conexão imediatamente
+        test_result = await evolution_helper.test_connection()
+        result["connection_test"] = test_result
+        
+        return result
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+@app.get("/api/evolution/saas-providers")
+async def list_saas_providers():
+    """📋 Lista provedores SaaS disponíveis"""
+    return {
+        "providers": [
+            {
+                "name": "evolutionapi_com",
+                "url": "https://api.evolutionapi.com", 
+                "description": "Evolution API oficial",
+                "documentation": "https://doc.evolutionapi.com"
+            },
+            {
+                "name": "whatsapp_evolution",
+                "url": "https://evolution-api.whatsapp.com",
+                "description": "WhatsApp Evolution API",
+                "documentation": "https://docs.whatsapp-evolution.com"
+            },
+            {
+                "name": "custom",
+                "url": "URL personalizada",
+                "description": "Seu próprio servidor Evolution API",
+                "documentation": "Configure uma URL personalizada"
+            }
+        ],
+        "current_config": evolution_helper.get_debug_info()
+    }
+
 # === WEBHOOK WHATSAPP ===
 @app.post("/webhook/whatsapp")
 async def whatsapp_webhook(data: dict):

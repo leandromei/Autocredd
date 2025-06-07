@@ -10,10 +10,17 @@ import asyncio
 from typing import Dict, Any, Optional
 import logging
 
-# Configuração
-EVOLUTION_API_URL = os.getenv("EVOLUTION_API_URL", "http://localhost:8081")
-EVOLUTION_API_KEY = os.getenv("EVOLUTION_API_KEY", "B6BAFC56-8173-4618-9B2D-FF3F4068DDCF")
+# Configuração - Evolution API SaaS
+EVOLUTION_API_URL = os.getenv("EVOLUTION_API_URL", "https://api.evolutionapi.com")
+EVOLUTION_API_KEY = os.getenv("EVOLUTION_API_KEY", "SUA_API_KEY_AQUI")
 RAILWAY_PUBLIC_DOMAIN = os.getenv("RAILWAY_PUBLIC_DOMAIN", "autocredd-production.up.railway.app")
+
+# URLs de provedores Evolution API SaaS conhecidos
+EVOLUTION_SAAS_PROVIDERS = {
+    "evolutionapi_com": "https://api.evolutionapi.com",
+    "whatsapp_evolution": "https://evolution-api.whatsapp.com", 
+    "custom": os.getenv("EVOLUTION_API_URL", "https://api.evolutionapi.com")
+}
 
 # Setup logging
 logging.basicConfig(level=logging.INFO)
@@ -24,6 +31,26 @@ class EvolutionAPIHelper:
         self.api_url = EVOLUTION_API_URL
         self.api_key = EVOLUTION_API_KEY
         self.webhook_url = f"https://{RAILWAY_PUBLIC_DOMAIN}/webhook/whatsapp"
+        self.is_saas = not ("localhost" in self.api_url or "127.0.0.1" in self.api_url)
+        
+    def configure_saas_provider(self, provider_name: str, api_key: str, custom_url: str = None):
+        """Configura provedor SaaS específico"""
+        if provider_name in EVOLUTION_SAAS_PROVIDERS:
+            self.api_url = EVOLUTION_SAAS_PROVIDERS[provider_name]
+        elif custom_url:
+            self.api_url = custom_url
+        else:
+            self.api_url = EVOLUTION_SAAS_PROVIDERS["evolutionapi_com"]
+            
+        self.api_key = api_key
+        self.is_saas = True
+        logger.info(f"✅ Configurado Evolution API SaaS: {self.api_url}")
+        return {
+            "success": True,
+            "provider": provider_name,
+            "api_url": self.api_url,
+            "configured": True
+        }
         
     async def test_connection(self) -> Dict[str, Any]:
         """Testa se a Evolution API está funcionando"""
