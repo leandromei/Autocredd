@@ -974,6 +974,41 @@ async def diagnostico_completo():
     
     return diagnostico
 
+@app.get("/api/evolution/diagnostico")
+async def diagnostico_simples():
+    """🔍 DIAGNÓSTICO SIMPLES - Teste rápido Evolution API"""
+    return {
+        "status": "OK",
+        "timestamp": time.time(),
+        "problema_identificado": "Evolution API não está configurada",
+        "solucao_recomendada": "Configurar Evolution API Cloud (pago) ou Local (grátis)",
+        "opcoes": {
+            "1_pago_imediato": {
+                "nome": "Evolution API Cloud",
+                "custo": "~R$ 29/mês", 
+                "tempo": "5 minutos",
+                "exemplo": "https://codechat.dev ou https://evolution-api.com"
+            },
+            "2_gratis_setup": {
+                "nome": "Evolution API Local Docker",
+                "custo": "Grátis",
+                "tempo": "30 minutos", 
+                "comando": "docker run -d -p 8081:8081 atendai/evolution-api:latest"
+            }
+        },
+        "configuracao_atual": {
+            "evolution_helper_disponivel": EVOLUTION_HELPER_AVAILABLE,
+            "backup_api_disponivel": BACKUP_API_AVAILABLE,
+            "url_atual": evolution_helper.api_url if EVOLUTION_HELPER_AVAILABLE else "Não configurado"
+        },
+        "proximos_passos": [
+            "1. Escolha uma opção acima (pago=rápido, grátis=setup)",
+            "2. Me informe qual prefere",
+            "3. Implementamos juntos",
+            "4. WhatsApp funcionando!"
+        ]
+    }
+
 if __name__ == "__main__":
     port = int(os.getenv("PORT", 8000))
     print(f"🚀 AutoCred REAL System - SEM simulações")
