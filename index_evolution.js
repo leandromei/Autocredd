@@ -123,6 +123,7 @@ app.get('/', (req, res) => {
     baileys_status: 'ACTIVE_AND_WORKING',
     qr_type: 'REAL_WHATSAPP_QR_CODES',
     deployment_timestamp: new Date().toISOString(),
+    force_redeploy: 'BAILEYS_INTEGRATION_V2_' + Date.now(),
     endpoints: {
       create: 'POST /instance/create',
       qrcode: 'GET /instance/qrcode/:name',
