@@ -33,7 +33,7 @@ logger = logging.getLogger(__name__)
 class EvolutionHelper:
     def __init__(self):
         # 🚀 SUA EVOLUTION API PRÓPRIA FUNCIONANDO!
-        self.api_url = "https://autocred-evolution-api.onrender.com"
+        self.api_url = "https://autocred-evolution-api-production.up.railway.app"
         self.api_key = "autocred-2024-super-secret-key"
         self.webhook_url = "https://autocred-evolution.up.railway.app/webhook/whatsapp"
         self.is_saas = True
