@@ -5,7 +5,7 @@
     "buildCommand": "npm install --force && npm cache clean --force"
   },
   "deploy": {
-    "startCommand": "node index_evolution.js",
+    "startCommand": "node index_evolution.cjs",
     "restartPolicyType": "on_failure",
     "restartPolicyMaxRetries": 3
   }
