@@ -91,10 +91,10 @@ const WhatsApp: React.FC = () => {
   const createInstance = async () => {
     try {
       const newInstanceName = `autocred-${Date.now()}`;
-      const response = await fetch('/api/whatsapp/create-instance', {
+      const response = await fetch('https://autocred-evolution-api-production.up.railway.app/instance/create', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ instance_name: newInstanceName })
+        body: JSON.stringify({ instanceName: newInstanceName, token: "autocred-token-2024" })
       });
       
       if (response.ok) {
@@ -109,7 +109,7 @@ const WhatsApp: React.FC = () => {
   const generateQrCode = async () => {
     try {
       setShowQrCode(true);
-      const response = await fetch(`/api/whatsapp/qrcode/${instanceName}`);
+      const response = await fetch(`https://autocred-evolution-api-production.up.railway.app/instance/qrcode/${instanceName}`);
       const data = await response.json();
       setQrCode(data.qrcode || '');
     } catch (error) {
