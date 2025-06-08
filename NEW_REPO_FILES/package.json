@@ -1,0 +1,23 @@
+{
+  "name": "autocred-whatsapp-api",
+  "version": "2.0.0",
+  "description": "AutoCred WhatsApp API - Produção SaaS",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "cors": "^2.8.5",
+    "qrcode": "^1.5.3",
+    "@whiskeysockets/baileys": "^6.7.18",
+    "pino": "^8.15.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "keywords": ["whatsapp", "api", "saas", "autocred"],
+  "author": "AutoCred",
+  "license": "MIT"
+} 

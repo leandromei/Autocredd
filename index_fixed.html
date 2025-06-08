@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🚀 AutoCred WhatsApp - SaaS Produção</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            padding: 20px;
+        }
+        
+        .container {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            text-align: center;
+            max-width: 600px;
+            width: 100%;
+            color: #333;
+        }
+        
+        .title {
+            font-size: 2.8em;
+            margin-bottom: 10px;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-weight: bold;
+        }
+        
+        .subtitle {
+            font-size: 1.4em;
+            margin-bottom: 30px;
+            color: #666;
+        }
+        
+        .saas-badge {
+            background: linear-gradient(45deg, #00C851, #007E33);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 25px;
+            display: inline-block;
+            margin-bottom: 30px;
+            font-weight: bold;
+            font-size: 1.1em;
+        }
+        
+        .status {
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            font-weight: bold;
+            font-size: 1.1em;
+        }
+        
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .status.warning {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+        }
+        
+        .status.loading {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .qr-container {
+            margin: 30px 0;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 15px;
+            border: 2px dashed #dee2e6;
+        }
+        
+        .qr-code {
+            max-width: 100%;
+            height: auto;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        
+        .connect-btn {
+            background: linear-gradient(45deg, #25D366, #128C7E);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 1.2em;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin: 10px;
+            font-weight: bold;
+        }
+        
+        .connect-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(37, 211, 102, 0.3);
+        }
+        
+        .connect-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .refresh-btn {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 20px;
+            cursor: pointer;
+            margin: 10px;
+            transition: all 0.3s ease;
+        }
+        
+        .refresh-btn:hover {
+            background: #0056b3;
+            transform: translateY(-1px);
+        }
+        
+        .instructions {
+            text-align: left;
+            background: #e3f2fd;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+            border-left: 4px solid #2196f3;
+        }
+        
+        .instructions h3 {
+            color: #1976d2;
+            margin-bottom: 15px;
+        }
+        
+        .instructions ol {
+            padding-left: 20px;
+        }
+        
+        .instructions li {
+            margin: 8px 0;
+            color: #555;
+        }
+        
+        .tech-info {
+            background: #f1f3f4;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 20px;
+            font-size: 0.9em;
+            color: #666;
+        }
+        
+        .pricing-info {
+            background: linear-gradient(45deg, #FF6B6B, #FF8E53);
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 20px 0;
+            font-weight: bold;
+        }
+
+        .demo-warning {
+            background: #fff3cd;
+            border: 2px solid #ffeaa7;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+            color: #856404;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="title">🚀 AutoCred</h1>
+        <p class="subtitle">WhatsApp SaaS - Produção</p>
+        
+        <div class="saas-badge">
+            💰 R$ 497-1.997/mês - Meta: R$ 15k MRR
+        </div>
+        
+        <div id="status" class="status loading">
+            🔄 Conectando com Evolution API...
+        </div>
+        
+        <button id="connectBtn" class="connect-btn" onclick="generateQRCode()" disabled>
+            📱 Gerar QR Code WhatsApp
+        </button>
+        
+        <button class="refresh-btn" onclick="checkAPIStatus()">
+            🔄 Verificar Evolution API
+        </button>
+        
+        <div id="qrContainer" class="qr-container" style="display: none;">
+            <h3 id="qrTitle">📱 QR Code:</h3>
+            <img id="qrCode" class="qr-code" src="" alt="QR Code">
+            <div id="qrInfo" style="margin-top: 15px; color: #666;"></div>
+        </div>
+        
+        <div id="demoWarning" class="demo-warning" style="display: none;">
+            <h3>⚠️ Atenção: QR Code de Demonstração</h3>
+            <p>Este QR Code é apenas para testes. Para WhatsApp real, será necessário atualizar para a versão com Baileys real.</p>
+        </div>
+        
+        <div class="instructions">
+            <h3>📋 Como conectar seu WhatsApp:</h3>
+            <ol>
+                <li>Clique em "Gerar QR Code WhatsApp"</li>
+                <li>Abra o WhatsApp no seu celular</li>
+                <li>Vá em ⋮ → Aparelhos conectados</li>
+                <li>Toque em "Conectar um aparelho"</li>
+                <li>Escaneie o QR Code que aparecerá acima</li>
+                <li>Aguarde a confirmação de conexão</li>
+            </ol>
+        </div>
+        
+        <div class="pricing-info">
+            🎯 <strong>SaaS para Promotoras:</strong> Solução para crise INSS<br>
+            📊 Target: 5.000+ promotoras afetadas<br>
+            💸 Planos: R$ 497, R$ 997, R$ 1.997/mês
+        </div>
+        
+        <div class="tech-info">
+            <strong>🔧 Info Técnica:</strong><br>
+            Evolution API: <span id="apiVersion">Verificando...</span><br>
+            Status: <span id="apiStatus">Carregando...</span><br>
+            QR Type: <span id="qrType">N/A</span><br>
+            Custo: R$ 0 - Totalmente Gratuito<br>
+            Uptime: <span id="apiUptime">Carregando...</span><br>
+            Railway Pro: ✅ Ativo
+        </div>
+    </div>
+
+    <script>
+        // Evolution API já funcionando no Railway
+        const API_BASE = 'https://autocred-evolution-api-production.up.railway.app';
+        let currentInstance = null;
+        
+        // Verificar status da Evolution API
+        async function checkAPIStatus() {
+            try {
+                console.log('🔍 Verificando Evolution API...');
+                const response = await fetch(`${API_BASE}/`);
+                const data = await response.json();
+                
+                console.log('📊 Response da API:', data);
+                
+                document.getElementById('apiVersion').textContent = `V${data.version} - ${data.message}`;
+                document.getElementById('apiStatus').textContent = 'Online ✅';
+                document.getElementById('apiUptime').textContent = `${Math.floor(data.uptime / 3600)}h ${Math.floor((data.uptime % 3600) / 60)}m`;
+                
+                document.getElementById('status').className = 'status success';
+                document.getElementById('status').innerHTML = '✅ Evolution API conectada e funcionando!';
+                document.getElementById('connectBtn').disabled = false;
+                
+                return true;
+            } catch (error) {
+                console.error('❌ Erro na API:', error);
+                document.getElementById('status').className = 'status error';
+                document.getElementById('status').innerHTML = '❌ Erro ao conectar com Evolution API';
+                document.getElementById('connectBtn').disabled = true;
+                document.getElementById('apiStatus').textContent = 'Offline ❌';
+                return false;
+            }
+        }
+        
+        // Gerar QR Code usando Evolution API
+        async function generateQRCode() {
+            document.getElementById('status').className = 'status loading';
+            document.getElementById('status').innerHTML = '🔄 Gerando QR Code via Evolution API...';
+            document.getElementById('connectBtn').disabled = true;
+            
+            try {
+                // Gerar nome único para instância
+                const instanceName = `autocred-saas-${Date.now()}`;
+                currentInstance = instanceName;
+                
+                console.log('🔧 Criando instância:', instanceName);
+                
+                // Criar instância na Evolution API
+                const createResponse = await fetch(`${API_BASE}/instance/create`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ instanceName })
+                });
+                
+                if (!createResponse.ok) throw new Error('Erro ao criar instância');
+                
+                const createData = await createResponse.json();
+                console.log('✅ Instância criada:', createData);
+                
+                // Aguardar 2 segundos
+                await new Promise(resolve => setTimeout(resolve, 2000));
+                
+                // Obter QR Code da Evolution API
+                console.log('📱 Obtendo QR Code...');
+                const qrResponse = await fetch(`${API_BASE}/instance/qrcode/${instanceName}`);
+                const qrData = await qrResponse.json();
+                
+                console.log('📊 QR Data:', qrData);
+                
+                if (!qrData.success || !qrData.qrcode) {
+                    throw new Error('QR Code não gerado pela Evolution API');
+                }
+                
+                // Verificar se é QR demo ou real
+                const isDemo = qrData.message && qrData.message.toLowerCase().includes('demo');
+                const qrType = isDemo ? 'DEMO/Teste' : 'REAL/Produção';
+                
+                // Exibir QR Code
+                document.getElementById('qrCode').src = `data:image/png;base64,${qrData.qrcode}`;
+                document.getElementById('qrContainer').style.display = 'block';
+                
+                // Atualizar status baseado no tipo de QR
+                if (isDemo) {
+                    document.getElementById('status').className = 'status warning';
+                    document.getElementById('status').innerHTML = `⚠️ QR Code DEMO gerado (${qrData.qrcode.length} chars) - Para testes apenas`;
+                    document.getElementById('qrTitle').innerHTML = '📱 QR Code de Demonstração:';
+                    document.getElementById('qrInfo').innerHTML = '⚠️ Este é um QR Code de teste - não conecta ao WhatsApp real';
+                    document.getElementById('demoWarning').style.display = 'block';
+                    document.getElementById('qrType').textContent = 'DEMO/Teste';
+                } else {
+                    document.getElementById('status').className = 'status success';
+                    document.getElementById('status').innerHTML = `✅ QR Code REAL gerado! (${qrData.qrcode.length} chars)`;
+                    document.getElementById('qrTitle').innerHTML = '📱 Escaneie com o WhatsApp:';
+                    document.getElementById('qrInfo').innerHTML = '⏱️ QR Code expira em 45 segundos';
+                    document.getElementById('demoWarning').style.display = 'none';
+                    document.getElementById('qrType').textContent = 'REAL/Produção';
+                }
+                
+                // Reabilitar botão após 10 segundos
+                setTimeout(() => {
+                    document.getElementById('connectBtn').disabled = false;
+                }, 10000);
+                
+                // Verificar status da conexão apenas se for QR real
+                if (!isDemo) {
+                    checkConnectionStatus();
+                }
+                
+            } catch (error) {
+                console.error('❌ Erro:', error);
+                document.getElementById('status').className = 'status error';
+                document.getElementById('status').innerHTML = `❌ Erro: ${error.message}`;
+                document.getElementById('connectBtn').disabled = false;
+            }
+        }
+        
+        // Verificar status da conexão
+        async function checkConnectionStatus() {
+            if (!currentInstance) return;
+            
+            try {
+                const response = await fetch(`${API_BASE}/instance/status/${currentInstance}`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    console.log('🔍 Status da conexão:', data.status);
+                    if (data.status === 'connected') {
+                        document.getElementById('status').className = 'status success';
+                        document.getElementById('status').innerHTML = '🎉 WhatsApp conectado via Evolution API!';
+                        document.getElementById('qrContainer').style.display = 'none';
+                    }
+                }
+            } catch (error) {
+                console.log('⚠️ Erro ao verificar status:', error);
+            }
+            
+            // Verificar novamente em 5 segundos
+            setTimeout(checkConnectionStatus, 5000);
+        }
+        
+        // Inicializar
+        window.onload = function() {
+            console.log('🚀 Frontend SaaS iniciado - integrando com Evolution API');
+            checkAPIStatus();
+        };
+    </script>
+</body>
+</html> 

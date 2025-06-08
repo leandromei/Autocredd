@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🚀 AutoCred WhatsApp SaaS - DEBUG</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        
+        .container {
+            background: rgba(255,255,255,0.95);
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            text-align: center;
+            max-width: 600px;
+            width: 100%;
+            color: #333;
+        }
+        
+        .title {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-weight: bold;
+        }
+        
+        .subtitle {
+            font-size: 1.3em;
+            margin-bottom: 30px;
+            color: #666;
+        }
+        
+        .status {
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            font-weight: bold;
+            font-size: 1.1em;
+        }
+        
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .status.loading {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .connect-btn {
+            background: linear-gradient(45deg, #25D366, #128C7E);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 1.2em;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin: 10px;
+            font-weight: bold;
+        }
+        
+        .connect-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(37,211,102,0.3);
+        }
+        
+        .connect-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .qr-container {
+            margin: 30px 0;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 15px;
+            border: 2px solid #25D366;
+            text-align: center;
+        }
+        
+        .qr-code { 
+            max-width: 300px !important; 
+            width: 300px !important;
+            height: 300px !important;
+            border-radius: 10px; 
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            display: block !important;
+            margin: 0 auto !important;
+            background: white;
+            border: 1px solid #ddd;
+        }
+        
+        .pricing {
+            background: linear-gradient(45deg, #FF6B6B, #FF8E53);
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 20px 0;
+            font-weight: bold;
+        }
+        
+        .debug-info {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 20px 0;
+            text-align: left;
+            font-family: monospace;
+            font-size: 12px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        
+        .debug-info h4 {
+            margin-bottom: 10px;
+            color: #495057;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="title">🚀 AutoCred DEBUG</h1>
+        <p class="subtitle">WhatsApp SaaS para Promotoras</p>
+        
+        <div id="status" class="status loading">🔄 Conectando com Evolution API...</div>
+        
+        <button id="connectBtn" class="connect-btn" onclick="generateQR()" disabled>📱 Gerar QR Code WhatsApp</button>
+        
+        <div id="qrContainer" class="qr-container" style="display: none;">
+            <h3>📱 Escaneie com o WhatsApp:</h3>
+            <img id="qrCode" class="qr-code" src="" alt="QR Code carregando..." style="display: none;">
+            <div id="qrLoading" style="margin: 20px 0;">🔄 Carregando QR Code...</div>
+            <p style="margin-top: 15px; color: #666;">⏱️ QR Code expira em 45 segundos</p>
+        </div>
+        
+        <div class="debug-info">
+            <h4>🐛 Debug Log:</h4>
+            <div id="debugLog"></div>
+        </div>
+        
+        <div class="pricing">
+            🎯 <strong>Target:</strong> 5.000+ promotoras INSS<br>
+            💸 <strong>Planos:</strong> R$ 497, R$ 997, R$ 1.997/mês<br>
+            🚀 <strong>Meta:</strong> R$ 15k MRR em 15 dias
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'https://autocred-evolution-api-production.up.railway.app';
+        let currentInstance = null;
+        let debugLog = [];
+        
+        function addDebugLog(message) {
+            const timestamp = new Date().toLocaleTimeString();
+            debugLog.push(`[${timestamp}] ${message}`);
+            const debugElement = document.getElementById('debugLog');
+            debugElement.innerHTML = debugLog.slice(-10).join('<br>');
+            debugElement.scrollTop = debugElement.scrollHeight;
+            console.log(`[DEBUG] ${message}`);
+        }
+        
+        async function checkAPI() {
+            try {
+                addDebugLog('🔍 Verificando Evolution API...');
+                
+                const response = await fetch(`${API_BASE}/`, {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                addDebugLog(`📊 API Status: ${response.status} ${response.statusText}`);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const data = await response.json();
+                addDebugLog(`✅ API Response: ${JSON.stringify(data).substring(0, 100)}...`);
+                
+                document.getElementById('status').className = 'status success';
+                document.getElementById('status').innerHTML = '✅ Evolution API conectada!';
+                document.getElementById('connectBtn').disabled = false;
+                
+                addDebugLog('✅ API conectada com sucesso!');
+                return true;
+            } catch (error) {
+                addDebugLog(`❌ Erro na API: ${error.message}`);
+                document.getElementById('status').className = 'status error';
+                document.getElementById('status').innerHTML = '❌ Erro ao conectar Evolution API';
+                document.getElementById('connectBtn').disabled = true;
+                return false;
+            }
+        }
+        
+        async function generateQR() {
+            addDebugLog('🚀 Iniciando geração de QR Code...');
+            
+            document.getElementById('status').className = 'status loading';
+            document.getElementById('status').innerHTML = '🔄 Gerando QR Code...';
+            document.getElementById('connectBtn').disabled = true;
+            
+            try {
+                const instanceName = `autocred-${Date.now()}`;
+                currentInstance = instanceName;
+                addDebugLog(`📝 Instance name: ${instanceName}`);
+                
+                // Criar instância
+                addDebugLog('🔧 Criando instância...');
+                const createResponse = await fetch(`${API_BASE}/instance/create`, {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json' 
+                    },
+                    body: JSON.stringify({ instanceName })
+                });
+                
+                addDebugLog(`📊 Create Status: ${createResponse.status} ${createResponse.statusText}`);
+                
+                if (!createResponse.ok) {
+                    const errorText = await createResponse.text();
+                    addDebugLog(`❌ Create Error: ${errorText}`);
+                    throw new Error(`Erro HTTP Create: ${createResponse.status}`);
+                }
+                
+                const createData = await createResponse.json();
+                addDebugLog(`✅ Instância criada: ${JSON.stringify(createData).substring(0, 100)}...`);
+                
+                // Aguardar 3 segundos para a instância estar pronta
+                addDebugLog('⏳ Aguardando instância inicializar...');
+                await new Promise(resolve => setTimeout(resolve, 3000));
+                
+                // Tentar obter QR Code múltiplas vezes
+                let qrData = null;
+                let attempts = 0;
+                const maxAttempts = 5;
+                
+                while (!qrData && attempts < maxAttempts) {
+                    attempts++;
+                    addDebugLog(`📱 Tentativa ${attempts}/${maxAttempts} - Obtendo QR Code...`);
+                    
+                    try {
+                        const qrResponse = await fetch(`${API_BASE}/instance/qrcode/${instanceName}`, {
+                            method: 'GET',
+                            headers: {
+                                'Accept': 'application/json',
+                                'Content-Type': 'application/json'
+                            }
+                        });
+                        
+                        addDebugLog(`📊 QR Status: ${qrResponse.status} ${qrResponse.statusText}`);
+                        
+                        if (!qrResponse.ok) {
+                            const errorText = await qrResponse.text();
+                            addDebugLog(`❌ QR Error: ${errorText}`);
+                            throw new Error(`Erro HTTP QR: ${qrResponse.status}`);
+                        }
+                        
+                        const qrResult = await qrResponse.json();
+                        addDebugLog(`📊 QR Data received: success=${qrResult.success}, qr_length=${qrResult.qrcode ? qrResult.qrcode.length : 0}`);
+                        
+                        if (qrResult.success && qrResult.qrcode && qrResult.qrcode.length > 100) {
+                            qrData = qrResult;
+                            break;
+                        } else {
+                            addDebugLog(`⚠️ QR Code ainda não pronto, tentando novamente em 2s...`);
+                            await new Promise(resolve => setTimeout(resolve, 2000));
+                        }
+                    } catch (error) {
+                        addDebugLog(`❌ Erro na tentativa ${attempts}: ${error.message}`);
+                        if (attempts < maxAttempts) {
+                            await new Promise(resolve => setTimeout(resolve, 2000));
+                        }
+                    }
+                }
+                
+                if (!qrData || !qrData.qrcode) {
+                    throw new Error('QR Code não foi gerado após múltiplas tentativas');
+                }
+                
+                // Exibir QR Code
+                addDebugLog('🖼️ Exibindo QR Code...');
+                const qrImg = document.getElementById('qrCode');
+                const qrContainer = document.getElementById('qrContainer');
+                const qrLoading = document.getElementById('qrLoading');
+                
+                // Mostrar container
+                qrContainer.style.display = 'block';
+                qrLoading.style.display = 'block';
+                qrImg.style.display = 'none';
+                
+                // Definir a imagem
+                const base64Image = `data:image/png;base64,${qrData.qrcode}`;
+                addDebugLog(`🖼️ Base64 length: ${base64Image.length}`);
+                
+                // Aguardar o carregamento da imagem
+                qrImg.onload = function() {
+                    addDebugLog('✅ QR Code image loaded successfully');
+                    qrLoading.style.display = 'none';
+                    qrImg.style.display = 'block';
+                    
+                    document.getElementById('status').className = 'status success';
+                    document.getElementById('status').innerHTML = '✅ QR Code gerado! Escaneie com WhatsApp';
+                };
+                
+                qrImg.onerror = function() {
+                    addDebugLog('❌ Erro ao carregar imagem QR Code');
+                    qrLoading.innerHTML = '❌ Erro ao carregar QR Code';
+                    document.getElementById('status').className = 'status error';
+                    document.getElementById('status').innerHTML = '❌ Erro ao exibir QR Code';
+                };
+                
+                // Definir a fonte da imagem
+                qrImg.src = base64Image;
+                
+                // Reabilitar botão após 15 segundos
+                setTimeout(() => { 
+                    document.getElementById('connectBtn').disabled = false; 
+                    addDebugLog('🔄 Botão reabilitado para nova tentativa');
+                }, 15000);
+                
+                // Iniciar verificação de conexão
+                setTimeout(() => checkConnection(), 5000);
+                
+            } catch (error) {
+                addDebugLog(`❌ Erro completo: ${error.message}`);
+                document.getElementById('status').className = 'status error';
+                document.getElementById('status').innerHTML = `❌ Erro: ${error.message}`;
+                document.getElementById('connectBtn').disabled = false;
+            }
+        }
+        
+        async function checkConnection() {
+            if (!currentInstance) return;
+            
+            try {
+                addDebugLog('🔍 Verificando status de conexão...');
+                const response = await fetch(`${API_BASE}/instance/status/${currentInstance}`);
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    addDebugLog(`📊 Status: ${data.status || 'unknown'}`);
+                    
+                    if (data.success && data.status === 'connected') {
+                        addDebugLog('🎉 WhatsApp conectado com sucesso!');
+                        document.getElementById('status').className = 'status success';
+                        document.getElementById('status').innerHTML = '🎉 WhatsApp conectado!';
+                        document.getElementById('qrContainer').style.display = 'none';
+                        return;
+                    }
+                }
+            } catch (error) { 
+                addDebugLog(`⚠️ Erro ao verificar conexão: ${error.message}`);
+            }
+            
+            // Verificar novamente em 5 segundos
+            setTimeout(checkConnection, 5000);
+        }
+        
+        window.onload = function() { 
+            addDebugLog('🚀 Frontend iniciado!');
+            checkAPI(); 
+        };
+    </script>
+</body>
+</html> 

@@ -1,0 +1,17 @@
+🚀 FORCE DEPLOY - QR CODE FIXES
+===============================
+
+⏰ Deploy Time: 2024-06-08 15:30
+🔧 Changes Applied:
+- Added detailed debug logging system
+- Multiple attempts (5x) to get QR code
+- Proper headers for API requests  
+- 3-second wait for instance initialization
+- Better image loading error handling
+- Visual loading indicators
+
+🎯 Goal: Fix QR code display issue
+📱 Frontend: index.html updated with debug version
+🌐 API: https://autocred-evolution-api-production.up.railway.app
+
+This file forces Railway to redeploy with QR code fixes! 
