@@ -80,7 +80,7 @@ const WhatsApp: React.FC = () => {
 
   const loadInstances = async () => {
     try {
-      const response = await fetch('https://autocred-evolution-api.onrender.com/manager/fetchInstances');
+      const response = await fetch('https://autocred-evolution-api-production.up.railway.app/manager/fetchInstances');
       const data = await response.json();
       setInstances(data);
     } catch (error) {
