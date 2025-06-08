@@ -89,7 +89,7 @@ async def send_whatsapp_message(phone: str, message: str, instance_name: str = "
         
         async with httpx.AsyncClient(timeout=30.0) as client:
             response = await client.post(
-                f"https://autocred-evolution-api.onrender.com/message/sendText/{instance_name}",
+                f"https://autocred-evolution-api-production.up.railway.app/message/sendText/{instance_name}",
                 json=payload,
                 headers={"Content-Type": "application/json"}
             )
@@ -142,7 +142,7 @@ async def create_whatsapp_instance(request: Request):
             }
             
             response = await client.post(
-                "https://autocred-evolution-api.onrender.com/instance/create",
+                "https://autocred-evolution-api-production.up.railway.app/instance/create",
                 json=payload,
                 headers={"Content-Type": "application/json"}
             )
@@ -171,7 +171,7 @@ async def get_whatsapp_qrcode(instance_name: str):
         
         # Chamar diretamente nossa Evolution API no Render
         async with httpx.AsyncClient(timeout=30.0) as client:
-            url = f"https://autocred-evolution-api.onrender.com/instance/qrcode/{instance_name}"
+            url = f"https://autocred-evolution-api-production.up.railway.app/instance/qrcode/{instance_name}"
             logger.info(f"🌐 Chamando URL: {url}")
             
             response = await client.get(
@@ -216,19 +216,19 @@ async def whatsapp_dashboard():
             "last_activity": time.time(),
             "evolution_api": {
                 "status": "connected",
-                "url": "https://autocred-evolution-api.onrender.com"
+                "url": "https://autocred-evolution-api-production.up.railway.app"
             }
         }
         
         # Testar conexão com nossa Evolution API
         try:
             async with httpx.AsyncClient(timeout=10.0) as client:
-                response = await client.get("https://autocred-evolution-api.onrender.com/health")
+                response = await client.get("https://autocred-evolution-api-production.up.railway.app/health")
                 if response.status_code == 200:
                     dashboard_data["evolution_api"]["connection_test"] = {"success": True, "status": "connected"}
                     
                     # Tentar listar instâncias
-                    instances_response = await client.get("https://autocred-evolution-api.onrender.com/manager/fetchInstances")
+                    instances_response = await client.get("https://autocred-evolution-api-production.up.railway.app/manager/fetchInstances")
                     if instances_response.status_code == 200:
                         instances_data = instances_response.json()
                         dashboard_data["total_instances"] = len(instances_data.get("instances", []))
