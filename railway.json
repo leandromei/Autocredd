@@ -5,7 +5,7 @@
     "buildCommand": "rm -rf node_modules package-lock.json && npm install express cors qrcode @whiskeysockets/baileys --save --force && npm cache clean --force && echo 'REBUILD COMPLETO V2.0.0 COM BAILEYS'"
   },
   "deploy": {
-    "startCommand": "node index.js",
+    "startCommand": "node server.js",
     "restartPolicyType": "always",
     "restartPolicyMaxRetries": 5
   },
