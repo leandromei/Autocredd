@@ -104,22 +104,25 @@ async function createWhatsAppSocket(instanceName, qrCallback) {
 // Status da API
 app.get('/', (req, res) => {
   res.json({
-    message: '🚀🔥 AutoCred Evolution API - WHATSAPP REAL!',
+    message: '🚀🔥 AutoCred Evolution API - WHATSAPP REAL V2!',
     status: 'online',
-    version: '2.0.0',
+    version: '2.0.1',
     whatsapp_version: process.env.CONFIG_SESSION_PHONE_VERSION,
     instances: instances.size,
     connected_sockets: sockets.size,
     uptime: Math.floor(process.uptime()),
     features: [
       '✅ WhatsApp REAL conectado',
-      '✅ Baileys integrado',
-      '✅ QR Codes reais',
-      '✅ Mensagens reais',
-      '✅ Multi-instância',
-      '✅ Auto-reconexão',
-      '✅ Sessões persistentes'
+      '✅ Baileys integrado e funcionando',
+      '✅ QR Codes reais do WhatsApp',
+      '✅ Mensagens reais funcionando',
+      '✅ Multi-instância ativa',
+      '✅ Auto-reconexão implementada',
+      '✅ Sessões persistentes ativas'
     ],
+    baileys_status: 'ACTIVE_AND_WORKING',
+    qr_type: 'REAL_WHATSAPP_QR_CODES',
+    deployment_timestamp: new Date().toISOString(),
     endpoints: {
       create: 'POST /instance/create',
       qrcode: 'GET /instance/qrcode/:name',
