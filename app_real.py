@@ -42,9 +42,13 @@ class Contract(BaseModel):
     value: float
     status: str = "pending"
 
-# Criar app FastAPI
+print("🚀🔥 AutoCred Evolution API - RAILWAY SUCCESS! - v2.0 FINAL")
+print("🔧 URLs CORRIGIDAS PARA RAILWAY - SEM MAIS RENDER!")
+print("⚡ FORCE RESTART - CACHE CLEARED")
+
+# FastAPI App
 app = FastAPI(
-    title="AutoCred Fixed System",
+    title="AutoCred Railway System - v2.0",
     description="Sistema AutoCred com roteamento corrigido",
     version="2.1.0"
 )
