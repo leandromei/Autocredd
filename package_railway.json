@@ -1,0 +1,22 @@
+{
+  "name": "autocred-evolution-api",
+  "version": "2.0.0",
+  "description": "AutoCred Evolution API with real WhatsApp integration",
+  "main": "index_evolution.cjs",
+  "scripts": {
+    "start": "node index_evolution.cjs",
+    "dev": "node index_evolution.cjs"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "cors": "^2.8.5",
+    "qrcode": "^1.5.3",
+    "@whiskeysockets/baileys": "^6.7.18",
+    "pino": "^8.15.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "author": "AutoCred",
+  "license": "MIT"
+} 
