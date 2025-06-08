@@ -1,21 +1,18 @@
-# Ignorar source do frontend, mas manter o dist buildado
-frontend_bolt/src/
-frontend_bolt/node_modules/
-frontend_bolt/public/
-frontend_bolt/*.json
-frontend_bolt/*.ts
-frontend_bolt/*.js
-frontend_bolt/.bolt/
-frontend_bolt/.gitignore
-
-# Outros arquivos desnecessários
+# Ignorar apenas arquivos desnecessários
 node_modules/
 *.log
 .git/
 .vscode/
-*.md
 __pycache__/
 *.pyc
 .env
+
+# NÃO ignorar index.html e arquivos de frontend!
+# index.html deve ser deployado
+# package.json deve ser deployado  
+# railway.json deve ser deployado
+
+# Outros arquivos desnecessários
+*.md
 *.bat
 *.ps1 
