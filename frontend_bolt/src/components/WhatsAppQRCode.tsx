@@ -36,18 +36,24 @@ export const WhatsAppQRCode: React.FC<WhatsAppQRCodeProps> = ({
       
       if (agentId) {
         // Usar endpoint específico para agentes
-        const response = await fetch(`/api/evolution/connect-agent/${agentId}`, {
-          method: 'POST'
+        const response = await fetch(`https://autocred-evolution-api-production.up.railway.app/instance/create`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ instanceName: agentId })
         });
         
         if (!response.ok) {
           throw new Error(`Erro ao conectar agente: ${response.status}`);
         }
         
-        const qrResult = await response.json();
-        console.log('📱 QR Result para agente:', qrResult);
+        const createResult = await response.json();
+        console.log('📱 Create Result para agente:', createResult);
         
-        if (qrResult.success && qrResult.qrcode) {
+        // Obter QR Code
+        const qrResponse = await fetch(`https://autocred-evolution-api-production.up.railway.app/instance/qrcode/${agentId}`);
+        const qrResult = await qrResponse.json();
+        
+        if (qrResult.qrcode) {
           console.log('✅ QR Code obtido para agente!');
           setQRCode(qrResult.qrcode);
           setStatus(`QR Code gerado para ${agentName || 'agente'}! Escaneie com seu WhatsApp.`);
@@ -59,19 +65,28 @@ export const WhatsAppQRCode: React.FC<WhatsAppQRCodeProps> = ({
           setError(qrResult.message);
         }
       } else {
-        // Fallback para método antigo com WebSocket
-        const qrResult = await whatsappService.getQRCode(instanceName);
+        // Usar instanceName se não tiver agentId
+        const instanceToUse = instanceName || 'autocred-default';
         
-        console.log('📱 QR Result via WebSocket:', qrResult);
+        // Criar instância
+        const response = await fetch(`https://autocred-evolution-api-production.up.railway.app/instance/create`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ instanceName: instanceToUse })
+        });
         
-        if (qrResult.qrCode) {
-          console.log('✅ QR Code REAL obtido via WebSocket!');
-          setQRCode(qrResult.qrCode);
-          setStatus('QR Code gerado via WebSocket! Escaneie com seu WhatsApp.');
-          setConnectedInstance(qrResult.instance);
+        // Obter QR Code
+        const qrResponse = await fetch(`https://autocred-evolution-api-production.up.railway.app/instance/qrcode/${instanceToUse}`);
+        const qrResult = await qrResponse.json();
+        
+        if (qrResult.qrcode) {
+          console.log('✅ QR Code obtido!');
+          setQRCode(qrResult.qrcode);
+          setStatus('QR Code gerado! Escaneie com seu WhatsApp.');
+          setConnectedInstance(instanceToUse);
           
           // Iniciar verificação de status
-          startStatusPolling(qrResult.instance);
+          startStatusPolling(instanceToUse);
         }
       }
       
@@ -90,16 +105,9 @@ export const WhatsAppQRCode: React.FC<WhatsAppQRCodeProps> = ({
   const startStatusPolling = (instance: string) => {
     const statusCheck = setInterval(async () => {
       try {
-        let statusResult;
-        
-        if (agentId) {
-          // Verificar status para agente específico
-          const response = await fetch(`/api/evolution/status/${instance}`);
-          statusResult = await response.json();
-        } else {
-          // Fallback para método antigo
-          statusResult = await whatsappService.getInstanceStatus(instance);
-        }
+        // Verificar status na API Railway
+        const response = await fetch(`https://autocred-evolution-api-production.up.railway.app/instance/status/${instance}`);
+        const statusResult = await response.json();
         
         console.log('📊 Status check:', statusResult);
         
@@ -123,7 +131,7 @@ export const WhatsAppQRCode: React.FC<WhatsAppQRCodeProps> = ({
   };
 
   const openEvolutionManager = () => {
-    const managerUrl = 'http://localhost:8081/manager';
+    const managerUrl = 'https://autocred-evolution-api-production.up.railway.app/manager';
     window.open(managerUrl, '_blank', 'width=1200,height=800');
   };
 

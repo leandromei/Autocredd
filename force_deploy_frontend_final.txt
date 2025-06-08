@@ -1,0 +1,11 @@
+FRONTEND ATUALIZADO - URLS CORRIGIDAS PARA RAILWAY
+=================================================
+
+CORREÇÕES FEITAS:
+✅ WhatsApp.tsx - URLs apontam para Evolution API Railway
+✅ WhatsAppQRCode.tsx - URLs apontam para Evolution API Railway  
+✅ API URLs: https://autocred-evolution-api-production.up.railway.app
+✅ Build atualizado frontend_bolt/dist/
+
+DEPLOY: $(date)
+STATUS: PRONTO PARA PRODUÇÃO 

@@ -69,9 +69,19 @@ const WhatsApp: React.FC = () => {
 
   const loadDashboard = async () => {
     try {
-      const response = await fetch('/api/whatsapp/dashboard');
+      const response = await fetch('https://autocred-evolution-api-production.up.railway.app/');
       const data = await response.json();
-      setDashboardData(data);
+      setDashboardData({
+        status: data.status,
+        total_instances: data.instances || 0,
+        active_instances: data.instances || 0,
+        messages_today: 0,
+        messages_total: 0,
+        evolution_api: {
+          status: data.status,
+          url: 'https://autocred-evolution-api-production.up.railway.app'
+        }
+      });
       setLoading(false);
     } catch (error) {
       console.error('Erro ao carregar dashboard:', error);
@@ -81,7 +91,7 @@ const WhatsApp: React.FC = () => {
 
   const loadInstances = async () => {
     try {
-      const response = await fetch('https://autocred-evolution-api.onrender.com/manager/fetchInstances');
+      const response = await fetch('https://autocred-evolution-api-production.up.railway.app/manager/fetchInstances');
       const data = await response.json();
       setInstances(data);
     } catch (error) {
@@ -92,10 +102,10 @@ const WhatsApp: React.FC = () => {
   const createInstance = async () => {
     try {
       const newInstanceName = `autocred-${Date.now()}`;
-      const response = await fetch('/api/whatsapp/create-instance', {
+      const response = await fetch('https://autocred-evolution-api-production.up.railway.app/instance/create', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ instance_name: newInstanceName })
+        body: JSON.stringify({ instanceName: newInstanceName })
       });
       
       if (response.ok) {
@@ -110,7 +120,7 @@ const WhatsApp: React.FC = () => {
   const generateQrCode = async () => {
     try {
       setShowQrCode(true);
-      const response = await fetch(`/api/whatsapp/qrcode/${instanceName}`);
+      const response = await fetch(`https://autocred-evolution-api-production.up.railway.app/instance/qrcode/${instanceName}`);
       const data = await response.json();
       setQrCode(data.qrcode || '');
     } catch (error) {
@@ -125,13 +135,12 @@ const WhatsApp: React.FC = () => {
     setSendingMessage(true);
     
     try {
-      const response = await fetch('/api/whatsapp/send', {
+      const response = await fetch(`https://autocred-evolution-api-production.up.railway.app/message/sendText/${instanceName}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          phone: phoneNumber,
-          message: messageText,
-          instance: instanceName
+          number: phoneNumber,
+          text: messageText
         })
       });
       
