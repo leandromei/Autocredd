@@ -5,7 +5,7 @@
     "buildCommand": "cp package_railway.json package.json && npm install express cors qrcode --save --force && npm cache clean --force"
   },
   "deploy": {
-    "startCommand": "node simple_baileys.js",
+    "startCommand": "node index.js",
     "restartPolicyType": "always",
     "restartPolicyMaxRetries": 5
   },
