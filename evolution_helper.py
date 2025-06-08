@@ -22,8 +22,8 @@ EVOLUTION_SERVERS = {
     "codechat_free": "https://free.codechat.dev", 
     "evolution_public": "https://evolution-api.herokuapp.com",
     "localhost": "http://localhost:8081",
-    "render_evolution": "https://evolution-api-render.onrender.com",
-    "custom": os.getenv("EVOLUTION_API_URL", "https://evo-demo.hockeydev.com.br")
+    "render_evolution": "https://autocred-evolution-api-production.up.railway.app",
+    "custom": os.getenv("EVOLUTION_API_URL", "https://autocred-evolution-api-production.up.railway.app")
 }
 
 # Setup logging
