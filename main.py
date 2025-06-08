@@ -82,8 +82,8 @@ print(f"🚀 Porta: {PORT}")
 print("🔄 Railway Force Redeploy - Fix Instance Creation")
 print("🔄 Railway Auto-Deploy: v2.2 - FORCE REDEPLOY")
 
-# Evolution API Configuration
-EVOLUTION_API_URL = os.getenv("EVOLUTION_API_URL", "https://autocred-evolution-api-production.up.railway.app")
+# Evolution API Configuration  
+EVOLUTION_API_URL = "https://autocred-evolution-api-production.up.railway.app"  # FORÇADO DIRETO
 EVOLUTION_API_KEY = os.getenv("EVOLUTION_API_KEY", "429683C4C977415CAAFCCE10F7D57E11")
 
 # WhatsApp Session Configuration
