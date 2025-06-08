@@ -58,7 +58,12 @@ async function createWhatsAppSocket(instanceName, qrCallback) {
       generateHighQualityLinkPreview: true,
       syncFullHistory: false,
       markOnlineOnConnect: true,
-      version: [2, 3000, 1015901307]
+      browser: ['AutoCred', 'Chrome', '120.0.0'],
+      version: [2, 3000, 1015901307],
+      connectTimeoutMs: 60000,
+      defaultQueryTimeoutMs: 60000,
+      keepAliveIntervalMs: 10000,
+      qrTimeout: 40000
     });
 
     // Event handlers
@@ -260,17 +265,18 @@ app.get('/instance/qrcode/:instanceName', async (req, res) => {
         try {
           clearTimeout(timeout);
           
-          // Gerar QR Code PNG do WhatsApp real
+          // Gerar QR Code PNG do WhatsApp real com configuração otimizada
           const qrCodeImage = await QRCode.toDataURL(qr, {
             type: 'image/png',
-            quality: 0.95,
-            margin: 2,
+            quality: 1.0,
+            margin: 1,
             color: {
               dark: '#000000',
               light: '#FFFFFF'
             },
-            width: 400,
-            errorCorrectionLevel: 'M'
+            width: 512,
+            errorCorrectionLevel: 'L',
+            scale: 8
           });
           
           // Cache do QR Code
