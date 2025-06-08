@@ -1,0 +1,19 @@
+🚀 RAILWAY FORCE DEPLOY NOW
+========================
+
+⏰ Timestamp: 2024-06-08 15:45:00
+🔧 Status: FORCING NEW DEPLOYMENT
+
+🎯 Changes to Deploy:
+- Updated index.html with QR code fixes
+- Added comprehensive debug logging
+- Multiple QR code generation attempts
+- Proper API headers and error handling
+- Visual loading indicators
+
+📱 Frontend URL: Railway auto-generated
+🌐 API URL: https://autocred-evolution-api-production.up.railway.app
+
+🚨 RAILWAY PLEASE REDEPLOY THIS PROJECT NOW!
+
+Deploy ID: FORCE_DEPLOY_20240608_154500 
